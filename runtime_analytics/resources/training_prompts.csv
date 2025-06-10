@@ -1,0 +1,12 @@
+query,prompt
+Summary of snsi job durations grouped by risk date.,sns duration by riskdate
+Number of jobs and total configuration count grouped by job type.,job count by type
+List of stdv jobs with execution time exceeding 5 minutes.,stdv long jobs
+Generic function to count frequency of any column value.,group and count
+"Aggregate a metric using a statistical function (e.g., mean) grouped by another column.",group and aggregate
+Filter jobs using conditional operators on a metric.,filter jobs
+Correlation between configuration count and execution duration.,correlation duration config
+Top n slowest jobs by execution duration.,top n slowest jobs
+Count of unique jobs run per calendar day.,unique jobs per day
+Average and maximum duration for each job type and risk date.,duration by type and riskdate
+Run count and average execution duration by hour of the day.,execution time analysis

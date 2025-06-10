@@ -1,24 +1,76 @@
-from runtime_analytics.loader import load_logs
-from runtime_analytics.analyzer import sns_duration_by_riskdate
+import argparse
 
-def run_cli():
-    path = input("Enter path to log file: ").strip()
-    df = load_logs(path)
+import pandas as pd
 
-    while True:
-        query = input("\nAsk a question (or 'exit'): ").lower().strip()
-        if query == "exit":
-            break
+from runtime_analytics.app_config.config import settings
+from runtime_analytics.app_db.sql_db import (
+    create_indexes,
+    load_df_from_db,
+    save_df_to_db,
+)
+from runtime_analytics.loader import load_logs_from_folder
+from runtime_analytics.ml.predict_response_time import predict_response_times
+from runtime_analytics.prompt_interpreter import interpret_prompt
+from runtime_analytics.prompts import FUNCTION_MAP, PREDEFINED_PROMPTS
 
-        if "sns" in query and "duration" in query and "riskdate" in query:
-            result = sns_duration_by_riskdate(df)
-            print(result.to_string(index=False))
 
-        elif "total jobs by type" in query:
-            print(df["type"].value_counts())
+def main():
+    parser = argparse.ArgumentParser(description="Runtime Analytics CLI")
+    parser.add_argument("--prompt", type=str, help="Natural language query or predefined prompt name")
+    parser.add_argument("--from-logs", action="store_true", help="Parse from logs instead of DB")
+    parser.add_argument("--output-csv", type=str, help="Output results to CSV file")
+    args = parser.parse_args()
 
-        else:
-            print("Unrecognized query. Try another.")
+    # Load and predict data
+    if args.from_logs:
+        df = load_logs_from_folder(settings.log_dir)
+        if df.empty:
+            print("No valid logs found.")
+            return
+        save_df_to_db(df, if_exists="append")
+        create_indexes()
+        df = predict_response_times(save_to_db=False)
+    else:
+        df = load_df_from_db()
+        if df.empty:
+            print("No data found in DB.")
+            return
+        df = predict_response_times(save_to_db=False)
+
+    if not args.prompt:
+        print("Please provide a prompt via --prompt argument.")
+        print("Available predefined prompts:")
+        for p in PREDEFINED_PROMPTS:
+            print(f" - {p}")
+        return
+
+    # Try predefined prompts first
+    prompt_key = args.prompt.strip().lower()
+    if prompt_key in (k.lower() for k in PREDEFINED_PROMPTS):
+        # Match by name, case-insensitive
+        for k, v in PREDEFINED_PROMPTS.items():
+            if k.lower() == prompt_key:
+                result = v["function"](df, **v["params"])
+                break
+    else:
+        # Use NLP interpreter for free-form queries
+        query = interpret_prompt(args.prompt)
+        func_name = query.get("function")
+        params = query.get("params", {})
+        func = FUNCTION_MAP.get(func_name)
+        if not func:
+            print(f"Could not interpret prompt: {args.prompt}")
+            return
+        result = func(df, **params)
+
+    # Show and/or export result
+    if isinstance(result, pd.DataFrame):
+        print(result)
+        if args.output_csv:
+            result.to_csv(args.output_csv, index=False)
+            print(f"Results saved to {args.output_csv}")
+    else:
+        print(result)
 
 if __name__ == "__main__":
-    run_cli()
+    main()

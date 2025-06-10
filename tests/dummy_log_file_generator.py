@@ -21,9 +21,11 @@ for _ in range(100):
     minutes = (duration_sec % 3600) // 60
     duration_str = f"{hours}h:{minutes}m"
 
-    line = (f"{timestamp} INFO Export completed config_count:{config_count} "
-            f"riskdate:{risk_date} id:{run_id} type:{log_type} "
-            f"on {run_date} {duration_str} in duration:{duration_sec} seconds.")
+    line = (
+        f"{timestamp} INFO Export completed config_count:{config_count} "
+        f"riskdate:{risk_date} id:{run_id} type:{log_type} "
+        f"on {run_date} {duration_str} in duration:{duration_sec} seconds."
+    )
 
     log_lines.append(line)
 

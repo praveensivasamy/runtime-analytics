@@ -1,45 +1,58 @@
-import yaml
-import pandas as pd
-from typing import Callable, Any
 from runtime_analytics.analyzer import (
-    sns_duration_by_riskdate,
+    aggregate_by_field,
+    filter_jobs,
     job_count_by_type,
-    stdv_long_jobs,
+    prediction_accuracy_per_job_type,
+    top_anomaly_scores,
+    top_slow_jobs_grouped,
+    unique_jobs_per_day,
 )
 
-# Registry of available analysis functions
-AVAILABLE_FUNCTIONS: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
-    "sns_duration_by_riskdate": sns_duration_by_riskdate,
+# Maps string function names to actual implementations for use in GUI, CLI, etc.
+FUNCTION_MAP = {
+    "top_slow_jobs_grouped": top_slow_jobs_grouped,
     "job_count_by_type": job_count_by_type,
-    "stdv_long_jobs": stdv_long_jobs,
+    "unique_jobs_per_day": unique_jobs_per_day,
+    "aggregate_by_field": aggregate_by_field,
+    "filter_jobs": filter_jobs,
+    "prediction_accuracy_per_job_type": prediction_accuracy_per_job_type,
+    "top_anomaly_scores": top_anomaly_scores,
 }
 
+# Optionally, you can define some static, human-friendly prompts for the sidebar menu
+PREDEFINED_PROMPTS = {
+    "Top Slow Jobs This Week": {
+    "function": top_slow_jobs_grouped,
+    "params": {"n": 10, "date_filter": "week"},
+},
+"Top Slow Jobs This Month": {
+    "function": top_slow_jobs_grouped,
+    "params": {"n": 10, "date_filter": "month"},
+},
+"Top Slow Jobs This Year": {
+    "function": top_slow_jobs_grouped,
+    "params": {"n": 10, "date_filter": "year"},
+},
 
-def load_prompt_map_from_yaml(
-    yaml_path: str,
-) -> tuple[dict[str, Callable[[pd.DataFrame], pd.DataFrame]], dict[str, dict[str, Any]]]:
-    """
-    Load prompt definitions from YAML and map to callable functions and metadata.
-    """
-    with open(yaml_path, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    "Job Count by Type": {"function": job_count_by_type, "params": {}},
+    "Unique Jobs Per Day": {"function": unique_jobs_per_day, "params": {}},
+    "Average Duration by Type": {
+        "function": aggregate_by_field,
+        "params": {
+            "group_by": "type",
+            "agg_field": "duration_sec",
+            "operations": ["mean"]
+        },
+    },
 
-    prompt_map: dict[str, Callable] = {}
-    metadata: dict[str, dict[str, Any]] = {}
-
-    for prompt, entry in config.get("prompts", {}).items():
-        if isinstance(entry, dict):
-            function_name = entry.get("function")
-            description = entry.get("description", "")
-            tags = entry.get("tags", [])
-        else:
-            function_name = entry
-            description = ""
-            tags = []
-
-        func = AVAILABLE_FUNCTIONS.get(function_name)
-        if func:
-            prompt_map[prompt.lower()] = func
-            metadata[prompt.lower()] = {"description": description, "tags": tags}
-
-    return prompt_map, metadata
+    "Prediction Accuracy per Job Type": {
+        "function": prediction_accuracy_per_job_type,
+        "params": {},
+    },
+    "Top Anomaly Scores": {
+        "function": top_anomaly_scores,
+        "params": {
+            "n": 10,
+        },
+    },
+}

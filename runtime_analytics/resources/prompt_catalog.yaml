@@ -1,0 +1,72 @@
+- intent: top_slow_jobs_grouped
+  examples:
+    - "top 5 slow jobs this week"
+    - "top 10 slow jobs this month"
+    - "show top 3 slow jobs this year"
+  function: top_slow_jobs_grouped
+  default_params:
+    n: 5
+    include_columns: [ "rank", "riskdate", "id", "type", "predicted_duration", "duration_sec", "run_timestamp", "config_count", "run_id" ]
+
+
+- intent: top_predicted_jobs
+  examples:
+    - "top 5 predicted jobs this week"
+    - "show top 10 jobs by predicted duration"
+    - "which jobs are likely to be slowest"
+    - "fastest jobs by prediction"
+  function: top_n_jobs
+  default_params:
+    sort_by: predicted_duration
+    n: 5
+    include_columns: [ "riskdate", "id", "type", "predicted_duration", "rank" ]
+
+- intent: job_count_by_type
+  examples:
+    - "job count by type"
+    - "how many jobs for each type"
+    - "show job type distribution"
+  function: job_count_by_type
+  default_params: { }
+
+- intent: unique_jobs_per_day
+  examples:
+    - "unique jobs per day"
+    - "show job run count per day"
+    - "how many unique jobs each day"
+  function: unique_jobs_per_day
+  default_params: { }
+
+- intent: aggregate_by_field
+  examples:
+    - "average duration by type"
+    - "sum of config_count by type"
+    - "max duration per job type"
+    - "group by type and aggregate duration"
+  function: aggregate_by_field
+  default_params:
+    group_by: type
+    agg_field: duration_sec
+    operations: [ "mean", "max", "min" ]
+
+- intent: prediction_accuracy_per_type
+  examples:
+    - "prediction accuracy per job type"
+    - "which types have best predictions"
+    - "show prediction errors by type"
+    - "prediction performance by job type"
+  function: prediction_accuracy_per_job_type
+  default_params:
+    include_columns: [ "type", "total_runs", "avg_absolute_error", "avg_relative_error" ]
+
+- intent: top_anomalous_jobs
+  examples:
+    - "top 5 anomalies"
+    - "show anomalous jobs"
+    - "which jobs are most unusual"
+    - "top 10 anomaly scores"
+    - "show suspicious jobs"
+  function: top_anomaly_scores
+  default_params:
+    n: 10
+    include_columns: [ "riskdate", "id", "type", "anomaly_score", "run_timestamp", "config_count", "run_id" ]

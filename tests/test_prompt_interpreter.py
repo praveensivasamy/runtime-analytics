@@ -1,7 +1,9 @@
-import pandas as pd
 import sqlite3
-from runtime_analytics.prompt_interpreter import interpret_prompt
+
+import pandas as pd
+
 from runtime_analytics.analyzer import top_n_jobs
+from runtime_analytics.prompt_interpreter import interpret_prompt
 
 
 def test_top_5_slow_jobs_this_week():
@@ -23,4 +25,4 @@ def test_top_5_slow_jobs_this_week():
     for col in ["riskdate", "id", "type"]:
         assert col in output.columns, f"Missing key column: {col}"
 
-    print("✅ test_top_5_slow_jobs_this_week passed.")
+    print("test_top_5_slow_jobs_this_week passed.")
