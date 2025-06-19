@@ -3,13 +3,14 @@ import argparse
 import pandas as pd
 
 from runtime_analytics.app_config.config import settings
-from runtime_analytics.app_db.sql_db import (
+from runtime_analytics.app_db.db_loader import (
     create_indexes,
     load_df_from_db,
-    save_df_to_db,
+
 )
+from runtime_analytics.app_db.db_operations import save_df_to_db
 from runtime_analytics.loader import load_logs_from_folder
-from runtime_analytics.ml.predict_response_time import predict_response_times
+from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
 from runtime_analytics.prompt_interpreter import interpret_prompt
 from runtime_analytics.prompts import FUNCTION_MAP, PREDEFINED_PROMPTS
 

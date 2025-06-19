@@ -14,4 +14,5 @@ class AppConfig(BaseSettings):
         env_prefix = "APP_"
         case_sensitive = False
 
+
 settings = AppConfig()

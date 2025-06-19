@@ -20,3 +20,50 @@ numpy = "^1.26.4"
 sqlite-utils = "^3.36.0"
 pyyaml = "^6.0"
 sentence-transformers = "^4.1.0"
+matplotlib = "^3.10.3"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.4.4"
+black = "^24.4.2"
+
+# -----------------------------
+# Ruff: Linting & Formatting
+# -----------------------------
+[tool.ruff]
+line-length = 150
+target-version = "py312"
+exclude = ["venv", ".venv", "__pycache__", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",       # Ignore docstrings
+    "S101",    # Allow assert in debug/tests
+    "COM812",  # Disable conflicting formatter rule
+    "ISC001"   # Disable conflicting import style rule
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.isort]
+known-first-party = ["runtime_analytics"]
+combine-as-imports = true
+force-single-line = false
+lines-after-imports = 2
+# -----------------------------
+# Black: Code Formatter
+# -----------------------------
+[tool.black]
+line-length = 150
+target-version = ["py312"]
+skip-string-normalization = false  # Use double quotes
+
+# -----------------------------
+# CLI Entry Points
+# -----------------------------
+[tool.poetry.scripts]
+format = "runtime_analytics.scripts.command:format"
+lint = "runtime_analytics.scripts.command:lint"
+check = "runtime_analytics.scripts.command:check"

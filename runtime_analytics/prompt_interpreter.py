@@ -11,8 +11,9 @@ from runtime_analytics.app_config.config import settings
 def load_prompt_catalog(yaml_path=None):
     if yaml_path is None:
         yaml_path = settings.resource_dir / "prompt_catalog.yaml"
-    with open(yaml_path, "r", encoding="utf-8") as f:
+    with open(yaml_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
+
 
 def extract_params_from_prompt(prompt: str) -> dict:
     prompt = prompt.lower()
@@ -36,6 +37,7 @@ def extract_params_from_prompt(prompt: str) -> dict:
         params["filters"]["run_date >= "] = start_of_week.strftime("%Y-%m-%d")
 
     return params
+
 
 class PromptInterpreter:
     def __init__(self, model_name="all-MiniLM-L6-v2", catalog_path=None):
@@ -71,12 +73,12 @@ def extract_params_from_prompt(prompt: str) -> dict:
     prompt = prompt.lower()
     params = {}
 
-    #Extract top N
+    # Extract top N
     match = re.search(r"top (\d+)", prompt)
     if match:
         params["n"] = int(match.group(1))
 
-    #Fast or slow
+    # Fast or slow
     if "fastest" in prompt:
         params["ascending"] = True
     if "slow" in prompt or "slowest" in prompt:
@@ -105,7 +107,7 @@ def extract_params_from_prompt(prompt: str) -> dict:
         params["start_date"] = start_last_month.strftime("%Y-%m-%d")
         params["end_date"] = last_month_end.strftime("%Y-%m-%d")
 
-    #Absolute ranges: from X to Y
+    # Absolute ranges: from X to Y
     match = re.search(r"from ([a-zA-Z0-9 ,]+?) to ([a-zA-Z0-9 ,]+)", prompt)
     if match:
         try:
@@ -121,6 +123,8 @@ def extract_params_from_prompt(prompt: str) -> dict:
 
 # Simple interface for outside modules
 _interpreter_instance = None
+
+
 def interpret_prompt(prompt: str) -> dict:
     global _interpreter_instance
     if _interpreter_instance is None:

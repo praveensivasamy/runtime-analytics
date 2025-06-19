@@ -5,13 +5,14 @@ import sys
 import pandas as pd
 
 from runtime_analytics.app_config.config import settings
-from runtime_analytics.app_db.sql_db import init_or_update_db
+from runtime_analytics.app_db.db_loader import init_or_update_db
 from runtime_analytics.loader import load_logs_from_folder
-from runtime_analytics.ml.predict_response_time import predict_response_times
+from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
 from runtime_analytics.prompt_interpreter import interpret_prompt
 from runtime_analytics.prompts import FUNCTION_MAP, PREDEFINED_PROMPTS
-
-
+from runtime_analytics.app_db.db_loader import create_indexes
+from runtime_analytics.app_db.db_operations import save_df_to_db
+from runtime_analytics.app_db.db_loader import load_df_from_db
 def run_cli(list_prompts=False, prompt_query=None, export_format="csv", from_logs=False):
     # Load and predict data
     if from_logs:
@@ -19,12 +20,12 @@ def run_cli(list_prompts=False, prompt_query=None, export_format="csv", from_log
         if df.empty:
             print("No valid logs found.")
             return
-        from runtime_analytics.app_db.sql_db import create_indexes, save_df_to_db
+
         save_df_to_db(df, if_exists="append")
         create_indexes()
         df = predict_response_times(save_to_db=False)
     else:
-        from runtime_analytics.app_db.sql_db import load_df_from_db
+
         df = load_df_from_db()
         if df.empty:
             print("No data found in DB.")
