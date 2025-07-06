@@ -9,7 +9,7 @@ from runtime_analytics.app_db.db_loader import (
 
 )
 from runtime_analytics.app_db.db_operations import save_df_to_db
-from runtime_analytics.loader import load_logs_from_folder
+from runtime_analytics.etl.loader import load_logs_from_folder
 from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
 from runtime_analytics.prompt_interpreter import interpret_prompt
 from runtime_analytics.prompts import FUNCTION_MAP, PREDEFINED_PROMPTS
@@ -24,7 +24,7 @@ def main():
 
     # Load and predict data
     if args.from_logs:
-        df = load_logs_from_folder(settings.log_dir)
+        df = load_logs_from_folder(settings.bootstrap_dir)
         if df.empty:
             print("No valid logs found.")
             return

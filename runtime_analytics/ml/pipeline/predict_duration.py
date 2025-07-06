@@ -4,7 +4,7 @@ import joblib
 import logging
 from runtime_analytics.app_config.config import settings
 from sklearn.pipeline import Pipeline
-from runtime_analytics.loader import extract_features
+from runtime_analytics.etl.loader import extract_features
 from runtime_analytics.app_db.db_operations import save_df_to_db
 
 # Set up logging
@@ -20,9 +20,10 @@ CATEGORICAL_FEATURES = ["day", "month", "week", "job_order", "type"]
 FEATURE_COLUMNS = NUMERICAL_FEATURES + CATEGORICAL_FEATURES
 MODEL_PATH = settings.base_dir / "ml" / "pipeline" / "trained" / "duration_prediction_model.pkl"
 
+
 def create_table_if_not_exists(df: pd.DataFrame, table_name: str, conn: sqlite3.Connection):
     """Create the table dynamically based on DataFrame columns."""
-    column_defs = ', '.join([f"{col} {get_sqlite_type(df[col])}" for col in df.columns])
+    column_defs = ", ".join([f"{col} {get_sqlite_type(df[col])}" for col in df.columns])
     create_table_query = f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             {column_defs}
@@ -30,6 +31,7 @@ def create_table_if_not_exists(df: pd.DataFrame, table_name: str, conn: sqlite3.
     """
     conn.execute(create_table_query)
     conn.commit()
+
 
 def get_sqlite_type(series: pd.Series) -> str:
     """Return the appropriate SQLite type for a DataFrame column."""
@@ -42,6 +44,7 @@ def get_sqlite_type(series: pd.Series) -> str:
         return "TEXT"  # Store datetime as TEXT in SQLite
     else:
         return "TEXT"  # Default to TEXT for other types
+
 
 def predict_response_times(db_path=None, model_path=None, top_n=10, save_to_db=True):
     db_path = db_path or settings.log_db_path

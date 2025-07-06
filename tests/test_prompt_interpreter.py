@@ -2,7 +2,7 @@ import sqlite3
 
 import pandas as pd
 
-from runtime_analytics.analyzer import top_n_jobs
+from runtime_analytics.services.analytics import top_n_jobs
 from runtime_analytics.prompt_interpreter import interpret_prompt
 
 

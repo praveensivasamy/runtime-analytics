@@ -1,60 +1,58 @@
 import streamlit as st
 import pandas as pd
 
+from loguru import logger
 from runtime_analytics.prompt_interpreter import interpret_prompt
 from runtime_analytics.prompts import FUNCTION_MAP
-from runtime_analytics.ml.learning_store import log_prompt_learning
+from runtime_analytics.repositories import job_log_repository
+import sqlite3
 from runtime_analytics.app_db.db_loader import load_df_from_db
-from runtime_analytics.loader import load_logs_from_folder
 from runtime_analytics.app_config.config import settings
 
-
-def render(tab, mode, df):
+def render(tab, mode: str, df: pd.DataFrame = None):
     with tab:
+        st.subheader("AI Prompt Interpreter")
+        # Always load fresh data
+        with sqlite3.connect(settings.log_db_path) as conn:
+            latest_date = conn.execute("SELECT MAX(run_date) FROM job_logs").fetchone()[0]
+
+        df = load_df_from_db(filters={"run_date": latest_date})
         if df is None or df.empty:
-            st.warning("No data available to display.")
-            return
-        st.subheader("AI-Powered Prompt Interpreter")
-
-        df = load_logs_from_folder(settings.log_dir) if mode == "Parse from logs" else load_df_from_db()
-        if df.empty:
-            st.warning("No data found. Try parsing logs first.")
+            st.warning("No data available to interpret.")
             return
 
-        user_query = st.text_input("Enter your analysis question:")
+        prompt_input = st.text_area("Enter your natural language prompt", height=120)
+        if st.button("Run Prompt"):
+            if not prompt_input.strip():
+                st.warning("Please enter a prompt.")
+                return
 
-        if not user_query:
-            return
+            try:
+                if "timestamp" in df.columns:
+                    min_ts = pd.to_datetime(df["timestamp"]).min()
+                    max_ts = pd.to_datetime(df["timestamp"]).max()
+                    st.info(f"Input data covers from **{min_ts.date()}** to **{max_ts.date()}** "
+                            f"with {len(df)} records total.")
 
-        query = interpret_prompt(user_query)
-        func_name = query.get("function")
-        params = query.get("params", {})
+                result = interpret_prompt(prompt_input)
+                func_name = result["function"]
+                func = FUNCTION_MAP.get(func_name)
 
-        if not func_name:
-            st.warning("Could not interpret the prompt. Try rephrasing.")
-            return
+                if not func:
+                    st.error(f"Function `{func_name}` not found in FUNCTION_MAP.")
+                    return
 
-        func = FUNCTION_MAP.get(func_name)
-        if not func:
-            st.warning(f"Function '{func_name}' not implemented.")
-            return
+                st.info(f"Matched function: `{func_name}`")
+                if result.get("params"):
+                    st.caption(f"Parameters: `{result['params']}`")
 
-        try:
-            st.info(f"Interpreted function: **{func_name}**")
-            if params:
-                param_str = ", ".join(f"{k} = {v}" for k, v in params.items())
-                st.caption(f"With parameters: `{param_str}`")
+                output_df = func(df, **result.get("params", {}))
+                if output_df.empty:
+                    st.warning("No results returned.")
+                else:
+                    st.success(f"{len(output_df)} results returned.")
+                    st.dataframe(output_df)
 
-            output = func(df, **params)
-            if isinstance(output, pd.DataFrame):
-                cols = list(output.columns)
-                display_cols = params.get("include_columns", cols)
-                st.dataframe(output[display_cols if display_cols else cols])
-            else:
-                st.write(output)
-
-            log_prompt_learning(user_query, func_name, 1.0, accepted=True)
-
-        except Exception as e:
-            st.error(f"Error running prompt function: {e}")
-            log_prompt_learning(user_query, func_name, 0.0, accepted=False)
+            except Exception as e:
+                logger.exception("Prompt interpretation failed")
+                st.error(f"Error running prompt: {e}")

@@ -1,37 +1,46 @@
+# File: runtime_analytics/main.py
+
 import argparse
 import subprocess
 import sys
+import logging
 
 import pandas as pd
 
+from runtime_analytics.app_config.logger import setup_logging
 from runtime_analytics.app_config.config import settings
-from runtime_analytics.app_db.db_loader import init_or_update_db
-from runtime_analytics.loader import load_logs_from_folder
+from runtime_analytics.app_db.db_loader import init_or_update_db, create_indexes, load_df_from_db
+from runtime_analytics.app_db.db_operations import save_df_to_db
+from runtime_analytics.etl.loader import load_logs_from_folder
 from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
 from runtime_analytics.prompt_interpreter import interpret_prompt
 from runtime_analytics.prompts import FUNCTION_MAP, PREDEFINED_PROMPTS
-from runtime_analytics.app_db.db_loader import create_indexes
-from runtime_analytics.app_db.db_operations import save_df_to_db
-from runtime_analytics.app_db.db_loader import load_df_from_db
+
+# Initialize logging
+setup_logging()
+logger = logging.getLogger(__name__)
+
+
 def run_cli(list_prompts=False, prompt_query=None, export_format="csv", from_logs=False):
-    # Load and predict data
+    # Load data (from logs or DB)
     if from_logs:
-        df = load_logs_from_folder(settings.log_dir)
+        df = load_logs_from_folder(settings.bootstrap_dir)
         if df.empty:
-            print("No valid logs found.")
-            return
+            logger.warning("No valid logs found in the folder.")
+            sys.exit(1)
 
         save_df_to_db(df, if_exists="append")
         create_indexes()
-        df = predict_response_times(save_to_db=False)
     else:
-
         df = load_df_from_db()
         if df.empty:
-            print("No data found in DB.")
-            return
-        df = predict_response_times(save_to_db=False)
+            logger.warning("No data found in the database.")
+            sys.exit(1)
 
+    # Predict duration
+    df = predict_response_times(save_to_db=False)
+
+    # List prompts
     if list_prompts:
         print("=== Available Predefined Prompts ===")
         for prompt in PREDEFINED_PROMPTS:
@@ -40,49 +49,60 @@ def run_cli(list_prompts=False, prompt_query=None, export_format="csv", from_log
         return
 
     if not prompt_query:
-        print("Please provide a prompt with --prompt. Use --list-prompts to view options.")
-        return
+        logger.error("Please provide a prompt with --prompt or use --list-prompts.")
+        sys.exit(1)
 
-    # First try to match a predefined prompt
+    # Match predefined prompt or interpret free-text prompt
     prompt_key = prompt_query.strip().lower()
+    result = None
+
     if prompt_key in (k.lower() for k in PREDEFINED_PROMPTS):
         for k, v in PREDEFINED_PROMPTS.items():
             if k.lower() == prompt_key:
                 result = v["function"](df, **v["params"])
                 break
     else:
-        # NLP interpreter
         query = interpret_prompt(prompt_query)
         func_name = query.get("function")
         params = query.get("params", {})
         func = FUNCTION_MAP.get(func_name)
+
         if not func:
-            print(f"Could not interpret prompt: {prompt_query}")
-            return
+            logger.error(f"Could not interpret prompt: {prompt_query}")
+            sys.exit(1)
+
         result = func(df, **params)
 
-    # Show and/or export result
+    # Handle and export result
     if isinstance(result, pd.DataFrame):
         print(result)
+
         if export_format:
             filename = f"output.{export_format}"
-            if export_format == "csv":
-                result.to_csv(filename, index=False)
-            elif export_format == "json":
-                result.to_json(filename, orient="records", indent=2)
-            print(f"Exported result to {filename}")
+            try:
+                if export_format == "csv":
+                    result.to_csv(filename, index=False)
+                elif export_format == "json":
+                    result.to_json(filename, orient="records", indent=2)
+                logger.info(f"Exported result to {filename}")
+            except Exception as e:
+                logger.error(f"Failed to export result: {e}")
     else:
         print(result)
+
 
 def run_gui():
     subprocess.run([sys.executable, "-m", "streamlit", "run", "prompt_gui.py"])
 
+
 def main():
+    # Ensure DB schema and indexes
     init_or_update_db(force_refresh=True)
+
     parser = argparse.ArgumentParser(description="Runtime Analytics Launcher")
     parser.add_argument("--mode", choices=["cli", "gui"], default="cli", help="Run in 'cli' (default) or 'gui' mode")
     parser.add_argument("--list-prompts", action="store_true", help="List all available predefined prompts")
-    parser.add_argument("--prompt", type=str, help="Natural language query or predefined prompt name")
+    parser.add_argument("--prompt", type=str, help="Free-form query or predefined prompt name")
     parser.add_argument("--format", choices=["csv", "json"], default="csv", help="Export format for results")
     parser.add_argument("--from-logs", action="store_true", help="Parse from logs instead of DB")
     parser.add_argument("--train-prompts", action="store_true", help="Train the prompt matching model")
@@ -100,10 +120,9 @@ def main():
         run_gui()
 
     if args.train_prompts:
-        from runtime_analytics.scripts.train_prompt_model_cli import (
-            main as train_model_main,
-        )
+        from runtime_analytics.scripts.train_prompt_model_cli import main as train_model_main
         train_model_main()
+
 
 if __name__ == "__main__":
     main()
