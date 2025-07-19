@@ -1,15 +1,15 @@
-# File: runtime_analytics/main.py
+from __future__ import annotations
 
 import argparse
+import logging
 import subprocess
 import sys
-import logging
 
 import pandas as pd
 
-from runtime_analytics.app_config.logger import setup_logging
 from runtime_analytics.app_config.config import settings
-from runtime_analytics.app_db.db_loader import init_or_update_db, create_indexes, load_df_from_db
+from runtime_analytics.app_config.logger import setup_logging
+from runtime_analytics.app_db.db_loader import create_indexes, init_or_update_db, load_df_from_db
 from runtime_analytics.app_db.db_operations import save_df_to_db
 from runtime_analytics.etl.loader import load_logs_from_folder
 from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
@@ -92,7 +92,7 @@ def run_cli(list_prompts=False, prompt_query=None, export_format="csv", from_log
 
 
 def run_gui():
-    subprocess.run([sys.executable, "-m", "streamlit", "run", "prompt_gui.py"])
+    subprocess.run([sys.executable, "-m", "streamlit", "run", "prompt_gui.py"], check=False)
 
 
 def main():
@@ -121,6 +121,7 @@ def main():
 
     if args.train_prompts:
         from runtime_analytics.scripts.train_prompt_model_cli import main as train_model_main
+
         train_model_main()
 
 

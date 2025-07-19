@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sqlite3
 
 from runtime_analytics.app_config.config import settings

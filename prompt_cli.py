@@ -1,13 +1,11 @@
+from __future__ import annotations
+
 import argparse
 
 import pandas as pd
 
 from runtime_analytics.app_config.config import settings
-from runtime_analytics.app_db.db_loader import (
-    create_indexes,
-    load_df_from_db,
-
-)
+from runtime_analytics.app_db.db_loader import create_indexes, load_df_from_db
 from runtime_analytics.app_db.db_operations import save_df_to_db
 from runtime_analytics.etl.loader import load_logs_from_folder
 from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
@@ -72,6 +70,7 @@ def main():
             print(f"Results saved to {args.output_csv}")
     else:
         print(result)
+
 
 if __name__ == "__main__":
     main()

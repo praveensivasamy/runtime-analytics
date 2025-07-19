@@ -1,16 +1,16 @@
+from __future__ import annotations
+
+from runtime_analytics.repositories import job_log_repository as repo
 from runtime_analytics.services.analytics import (
-    get_top_slow_jobs,
     aggregate_by_field,
     filter_jobs,
+    get_top_slow_jobs,
     job_count_by_type,
     prediction_accuracy_per_job_type,
     top_anomaly_scores,
     top_slow_jobs_grouped,
     unique_jobs_per_day,
 )
-
-from runtime_analytics.repositories import job_log_repository as repo
-
 
 # Maps string function names to actual implementations for use in GUI, CLI, etc.
 FUNCTION_MAP = {

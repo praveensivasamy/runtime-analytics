@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
+
 import pandas as pd
 from loguru import logger
 
@@ -19,7 +22,8 @@ def get_logs_for_time_range(start_date: str, end_date: str) -> pd.DataFrame:
     logger.info(f"Fetching logs from {start_date} to {end_date}")
     df = load_df_from_db()
     df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-    mask = (df["timestamp"] >= pd.to_datetime(start_date)) & (df["timestamp"] <= pd.to_datetime(end_date))
+    mask = (df["timestamp"] >= pd.to_datetime(start_date)) & (
+        df["timestamp"] <= pd.to_datetime(end_date))
     return df[mask]
 
 
@@ -36,7 +40,8 @@ def get_logs_by_period(period: str) -> pd.DataFrame:
         logger.warning(f"Unknown period requested: {period}")
         return pd.DataFrame()
 
-    logger.info(f"Fetching logs since {start.strftime('%Y-%m-%d')} for period: {period}")
+    logger.info(
+        f"Fetching logs since {start.strftime('%Y-%m-%d')} for period: {period}")
     df = load_df_from_db()
     df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
     return df[df["timestamp"] >= start]

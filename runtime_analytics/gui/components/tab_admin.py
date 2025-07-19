@@ -1,17 +1,19 @@
-import streamlit as st
+from __future__ import annotations
+
 import time
 
-from runtime_analytics.ml.pipeline.predict_duration import (
-    predict_response_times,
-)
-from runtime_analytics.ml.pipeline.train_duration_prediction import train_pipeline_model
+import streamlit as st
+
 from runtime_analytics.app_config.config import settings
+from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
+from runtime_analytics.ml.pipeline.train_duration_prediction import train_pipeline_model
 
 
 def render(tab):
     with tab:
         st.subheader("Admin Tools")
-        st.markdown("Use these controls to manage training, prediction, and prompt data.")
+        st.markdown(
+            "Use these controls to manage training, prediction, and prompt data.")
         if st.button("Regenerate Training Prompts CSV"):
             with st.spinner("Regenerating training prompts..."):
                 from runtime_analytics.scripts.generate_training_csv import generate_training_prompts_csv
@@ -39,4 +41,5 @@ def render(tab):
             with st.spinner("Generating predictions from latest data..."):
                 predict_response_times()
             elapsed = time.time() - start
-            st.success(f"✅ Predictions updated in 'job_logs_with_predictions' in {elapsed:.2f} seconds.")
+            st.success(
+                f"✅ Predictions updated in 'job_logs_with_predictions' in {elapsed:.2f} seconds.")

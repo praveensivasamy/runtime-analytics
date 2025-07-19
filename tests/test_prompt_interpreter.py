@@ -2,8 +2,8 @@ import sqlite3
 
 import pandas as pd
 
-from runtime_analytics.services.analytics import top_n_jobs
 from runtime_analytics.prompt_interpreter import interpret_prompt
+from runtime_analytics.services.analytics import top_n_jobs
 
 
 def test_top_5_slow_jobs_this_week():

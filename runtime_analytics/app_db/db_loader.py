@@ -1,26 +1,33 @@
-import sqlite3
-import pandas as pd
-from typing import Optional, Dict, Any
+from __future__ import annotations
 
+import sqlite3
+from typing import Any
+
+import pandas as pd
 from loguru import logger
+
 from runtime_analytics.app_config.config import settings
+from runtime_analytics.app_db.db_operations import ensure_db_initialized, save_df_to_db
 from runtime_analytics.etl.loader import load_logs_from_folder
-from runtime_analytics.app_db.db_operations import save_df_to_db, ensure_db_initialized
 
 
 def create_indexes(table_name: str = "job_logs") -> None:
     logger.info(f"Creating indexes on table: {table_name}")
     with sqlite3.connect(settings.log_db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_type ON {table_name} (type);")
-        cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_riskdate ON {table_name} (riskdate);")
-        cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_id_type_riskdate ON {table_name} (id, type, riskdate);")
-        cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_job_id ON {table_name} (job_id);")
+        cursor.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_type ON {table_name} (type);")
+        cursor.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_riskdate ON {table_name} (riskdate);")
+        cursor.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_id_type_riskdate ON {table_name} (id, type, riskdate);")
+        cursor.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_job_id ON {table_name} (job_id);")
         conn.commit()
     logger.info("Index creation complete.")
 
 
-def load_df_from_db(table_name: str = "job_logs", filters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+def load_df_from_db(table_name: str = "job_logs", filters: dict[str, Any] | None = None) -> pd.DataFrame:
     """
     Load data from the database table with optional SQL-level filters.
 
@@ -29,7 +36,8 @@ def load_df_from_db(table_name: str = "job_logs", filters: Optional[Dict[str, An
     - {"run_date": ["2024-07-01", "2024-07-02"]}
     """
     ensure_db_initialized(table_name)
-    logger.info(f"Loading data from table: {table_name} with filters: {filters}")
+    logger.info(
+        f"Loading data from table: {table_name} with filters: {filters}")
 
     where_clauses = []
     values = []
@@ -58,10 +66,11 @@ def init_or_update_db(force_refresh: bool = False) -> None:
     table_name = "logs"
     ensure_db_initialized(table_name)
 
-    latest_ts: Optional[pd.Timestamp] = None
+    latest_ts: pd.Timestamp | None = None
     if not force_refresh:
         with sqlite3.connect(settings.log_db_path) as conn:
-            result = conn.execute(f"SELECT MAX(timestamp) FROM {table_name}").fetchone()
+            result = conn.execute(
+                f"SELECT MAX(timestamp) FROM {table_name}").fetchone()
             if result and result[0]:
                 latest_ts = pd.to_datetime(result[0])
 
@@ -82,4 +91,5 @@ def init_or_update_db(force_refresh: bool = False) -> None:
 
     save_df_to_db(df, if_exists="append")
     create_indexes()
-    logger.success(f"{len(df)} new rows inserted {'(full refresh)' if force_refresh else '(filtered by timestamp)'}")
+    logger.success(
+        f"{len(df)} new rows inserted {'(full refresh)' if force_refresh else '(filtered by timestamp)'}")

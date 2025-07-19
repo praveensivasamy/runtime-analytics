@@ -1,20 +1,20 @@
-# File: runtime_analytics/etl/loader.py
+from __future__ import annotations
 
-from pathlib import Path
 import logging
-from pathlib import Path
 import shutil
-import logging
+from pathlib import Path
+
 import pandas as pd
-import pandas as pd
-from runtime_analytics.etl.log_parser import parse_log_line
+
 from runtime_analytics.app_db.db_operations import save_df_to_db
+from runtime_analytics.etl.log_parser import parse_log_line
 
 logger = logging.getLogger(__name__)
 
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%d %H:%M:%S,%f", errors="coerce")
+    df["timestamp"] = pd.to_datetime(
+        df["timestamp"], format="%Y-%m-%d %H:%M:%S,%f", errors="coerce")
     df["riskdate"] = pd.to_datetime(df["riskdate"], errors="coerce")
     df["run_date"] = pd.to_datetime(df["run_date"], errors="coerce")
 
@@ -34,11 +34,14 @@ def extract_features(df: pd.DataFrame) -> pd.DataFrame:
     df["quarter_end"] = df["timestamp"].dt.is_quarter_end.astype(int)
     df["year_end"] = df["timestamp"].dt.is_year_end.astype(int)
 
-    df["job_id"] = df["riskdate"].dt.strftime("%Y-%m-%d") + "_" + df["id"].astype(str) + "_" + df["type"].astype(str)
+    df["job_id"] = df["riskdate"].dt.strftime(
+        "%Y-%m-%d") + "_" + df["id"].astype(str) + "_" + df["type"].astype(str)
     df["job_count"] = df.groupby("run_date")["job_id"].transform("count")
-    df["job_sequence"] = df.groupby(["run_date", "job_id"])["timestamp"].rank(method="first").astype(int)
+    df["job_sequence"] = df.groupby(["run_date", "job_id"])[
+        "timestamp"].rank(method="first").astype(int)
     df["job_run_count"] = df.groupby(["run_date", "job_id"]).cumcount() + 1
-    df["job_order"] = df["job_sequence"].astype(str) + " of " + df["job_count"].astype(str)
+    df["job_order"] = df["job_sequence"].astype(
+        str) + " of " + df["job_count"].astype(str)
 
     return df
 
@@ -60,9 +63,11 @@ def load_logs_from_folder(folder_path: str, save_to_db: bool = True) -> pd.DataF
 
             if parsed:
                 all_lines.extend(parsed)
-                files_to_move.append(file)  # only move successfully parsed files
+                # only move successfully parsed files
+                files_to_move.append(file)
             else:
-                logger.warning(f"No valid lines found in {file.name}, skipping move.")
+                logger.warning(
+                    f"No valid lines found in {file.name}, skipping move.")
         except Exception as e:
             logger.warning(f"Failed to parse {file.name}: {e}")
 

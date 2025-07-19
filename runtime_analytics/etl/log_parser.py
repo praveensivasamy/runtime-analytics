@@ -1,8 +1,7 @@
-# File: runtime_analytics/etl/parser.py
+from __future__ import annotations
 
-import re
 import logging
-from typing import Optional, Dict
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ LOG_PATTERN = re.compile(
 )
 
 
-def parse_log_line(line: str) -> Optional[Dict[str, str]]:
+def parse_log_line(line: str) -> dict[str, str] | None:
     """
     Parses a single log line using a fixed format.
     Returns a dictionary of fields if matched, or None if not matched.
@@ -25,4 +24,5 @@ def parse_log_line(line: str) -> Optional[Dict[str, str]]:
     match = LOG_PATTERN.match(line.strip())
     if match:
         return match.groupdict()
-    return None  # or optionally: logger.debug(f"Unmatched log line: {line.strip()}")
+    # or optionally: logger.debug(f"Unmatched log line: {line.strip()}")
+    return None

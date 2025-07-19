@@ -1,13 +1,14 @@
 import random
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 from pathlib import Path
 
 # Config
-types = ["SNSI", "STDV", "STRV", "PSTR", "FSTR","GSTR","STDV","STRA"]
+types = ["SNSI", "STDV", "STRV", "PSTR", "FSTR", "GSTR", "STDV", "STRA"]
 ids = list(range(1, 21))
 start_date = datetime(2025, 1, 1).date()
 end_date = datetime.now().date()
 log_lines = []
+
 
 # Create timestamp on given date (ensures uniqueness per date)
 def unique_random_timestamp_on(date_obj, used_timestamps):
@@ -16,17 +17,20 @@ def unique_random_timestamp_on(date_obj, used_timestamps):
         minute = random.randint(0, 59)
         second = random.randint(0, 59)
         microsecond = random.randint(0, 999999)
-        dt = datetime.combine(date_obj, time(hour, minute, second, microsecond))
+        dt = datetime.combine(date_obj, time(
+            hour, minute, second, microsecond))
         timestamp = dt.strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
         if timestamp not in used_timestamps:
             used_timestamps.add(timestamp)
             return timestamp
+
 
 # Return previous valid weekday for riskdate
 def previous_weekday(date_obj):
     while date_obj.weekday() >= 5:  # 5 = Saturday, 6 = Sunday
         date_obj -= timedelta(days=1)
     return date_obj
+
 
 # Generate logs
 current_date = start_date
@@ -56,7 +60,8 @@ while current_date <= end_date:
     current_date += timedelta(days=1)
 
 # Save log file
-log_file_path = Path(f"../runtime_analytics/bootstrap/dummy_runtime_logs_{end_date}.txt")
+log_file_path = Path(
+    f"../runtime_analytics/bootstrap/dummy_runtime_logs_{end_date}.txt")
 log_file_path.parent.mkdir(parents=True, exist_ok=True)
 with open(log_file_path, "w") as f:
     f.write("\n".join(log_lines))

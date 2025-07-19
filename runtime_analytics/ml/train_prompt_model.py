@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import joblib
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
-
 
 MODEL_PATH = Path(__file__).resolve().parent / "trained_prompt_model.pkl"
 VEC_PATH = Path(__file__).resolve().parent / "vectorizer.pkl"

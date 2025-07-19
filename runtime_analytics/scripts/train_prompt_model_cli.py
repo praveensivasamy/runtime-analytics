@@ -14,5 +14,6 @@ def main():
     df = pd.read_csv(csv_path)
     train_and_save_prompt_model(df)
 
+
 if __name__ == "__main__":
     main()

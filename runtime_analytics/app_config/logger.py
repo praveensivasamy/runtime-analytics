@@ -1,4 +1,4 @@
-# File: runtime_analytics/app_config/logger.py
+from __future__ import annotations
 
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -12,9 +12,13 @@ def setup_logging(log_level: str = "INFO") -> None:
     # Use built-in default level INFO if none provided or invalid
     level = getattr(logging, log_level.upper(), logging.INFO)
 
-    formatter = logging.Formatter(fmt="%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(
+        fmt="%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
-    file_handler = TimedRotatingFileHandler(logs_path / "runtime_analytics.log", when="midnight", interval=1, backupCount=7, encoding="utf-8")
+    file_handler = TimedRotatingFileHandler(
+        logs_path / "runtime_analytics.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
+    )
     file_handler.setFormatter(formatter)
 
     console_handler = logging.StreamHandler()

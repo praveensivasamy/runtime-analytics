@@ -1,7 +1,7 @@
 # File: tests/etl/test_parser.py
 
-import pytest
 from runtime_analytics.etl.log_parser import parse_log_line
+
 
 def test_valid_log_line():
     line = (

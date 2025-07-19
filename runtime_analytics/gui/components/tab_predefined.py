@@ -1,18 +1,21 @@
 import io
-import streamlit as st
-import pandas as pd
-
-from loguru import logger
-from runtime_analytics.prompts import PREDEFINED_PROMPTS
 import sqlite3
-from runtime_analytics.app_db.db_loader import load_df_from_db
+
+import pandas as pd
+import streamlit as st
+from loguru import logger
+
 from runtime_analytics.app_config.config import settings
+from runtime_analytics.app_db.db_loader import load_df_from_db
+from runtime_analytics.prompts import PREDEFINED_PROMPTS
+
 
 def render(tab, mode, df):
     with tab:
         # Always load latest data on tab open
         with sqlite3.connect(settings.log_db_path) as conn:
-            latest_date = conn.execute("SELECT MAX(run_date) FROM job_logs").fetchone()[0]
+            latest_date = conn.execute(
+                "SELECT MAX(run_date) FROM job_logs").fetchone()[0]
 
         df = load_df_from_db(filters={"run_date": latest_date})
         if df is None or df.empty:
@@ -20,7 +23,8 @@ def render(tab, mode, df):
             return
 
         st.subheader("Select a Predefined Prompt to Run")
-        selected_prompt = st.selectbox("Choose prompt", list(PREDEFINED_PROMPTS.keys()))
+        selected_prompt = st.selectbox(
+            "Choose prompt", list(PREDEFINED_PROMPTS.keys()))
 
         prompt_info = PREDEFINED_PROMPTS[selected_prompt]
         func = prompt_info["function"]
@@ -36,8 +40,8 @@ def render(tab, mode, df):
             if "timestamp" in df.columns:
                 min_ts = pd.to_datetime(df["timestamp"]).min()
                 max_ts = pd.to_datetime(df["timestamp"]).max()
-                st.info(f"Input data covers from **{min_ts.date()}** to **{max_ts.date()}** "
-                        f"with {len(df)} records total.")
+                st.info(
+                    f"Input data covers from **{min_ts.date()}** to **{max_ts.date()}** with {len(df)} records total.")
 
             result: pd.DataFrame = func(df, **params)
             if result.empty:

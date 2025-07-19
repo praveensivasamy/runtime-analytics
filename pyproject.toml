@@ -24,43 +24,48 @@ matplotlib = ">=3.10.3"
 pytest = ">=8.4.1"
 loguru = "^0.7.3"
 
+
 [tool.poetry.group.dev.dependencies]
-ruff = ">=0.4.4"
 black = ">=24.4.2"
 safety = ">=2.3.5"                                # adds vulnerability scanning
+isort = "^6.0.1"
+pylint = "^3.3.7"
+mypy = "^1.16.1"
 
 # -----------------------------
-# Ruff: Linting & Formatting
+# isort: Import Sorting
 # -----------------------------
-[tool.ruff]
-line-length = 150
-target-version = "py312"
-exclude = ["venv", ".venv", "__pycache__", "build", "dist"]
+[tool.isort]
+combine_as_imports = true
+force_single_line = false
+line_length = 130
+known_first_party = ["runtime_analytics"]
+src_paths = ["runtime_analytics", "tests"]  # Specify directories to sort imports
 
-[tool.ruff.lint]
-select = ["ALL"]
-ignore = [
-    "D",       # Ignore docstrings
-    "S101",    # Allow assert in debug/tests
-    "COM812",  # Disable conflicting formatter rule
-    "ISC001"   # Disable conflicting import style rule
-]
+# -----------------------------
+# Pylint: Linting
+# -----------------------------
+[tool.pylint]
+disable = "C0111,C0103,W1203"  # Disable some default warnings, like missing docstring and invalid names
+max-line-length = 130
+output-format = "text"
 
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-
-[tool.ruff.lint.isort]
-known-first-party = ["runtime_analytics"]
-combine-as-imports = true
-force-single-line = false
-lines-after-imports = 2
+# -----------------------------
+# mypy: Type Checking
+# -----------------------------
+[mypy]
+# Enable strict type checking
+strict = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+show_column_numbers = true
+check_untyped_defs = true
 
 # -----------------------------
 # Black: Code Formatter
 # -----------------------------
 [tool.black]
-line-length = 150
+line-length = 130
 target-version = ["py312"]
 skip-string-normalization = false  # Use double quotes
 
@@ -71,3 +76,4 @@ skip-string-normalization = false  # Use double quotes
 format = "runtime_analytics.scripts.command:format"
 lint = "runtime_analytics.scripts.command:lint"
 check = "runtime_analytics.scripts.command:check"
+sort_imports = "runtime_analytics.scripts.command:sort_imports"

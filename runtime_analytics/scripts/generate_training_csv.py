@@ -18,7 +18,8 @@ def generate_training_prompts_csv(output_file: Path):
         description = meta.get("description", "")
         if description:
             # Simple heuristic: use description as seed query
-            query = description.replace("Show", "Display").replace("Compute", "Find").strip().capitalize()
+            query = description.replace("Show", "Display").replace(
+                "Compute", "Find").strip().capitalize()
             examples.append((query, prompt_text))
         else:
             examples.append((f"Run {prompt_text}", prompt_text))
@@ -30,6 +31,7 @@ def generate_training_prompts_csv(output_file: Path):
         writer.writerows(examples)
 
     print(f"Generated: {output_file}")
+
 
 if __name__ == "__main__":
     csv_path = settings.resource_dir / "training_prompts.csv"

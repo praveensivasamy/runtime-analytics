@@ -1,24 +1,27 @@
-import streamlit as st
+from __future__ import annotations
+
 import sqlite3
 import time
+
 import pandas as pd
+import streamlit as st
 from loguru import logger
+
+from runtime_analytics.app_config.config import settings
+from runtime_analytics.app_db.db_loader import create_indexes, load_df_from_db
+from runtime_analytics.app_db.db_operations import save_df_to_db
+from runtime_analytics.etl.loader import load_logs_from_folder
 
 # Component imports
 from runtime_analytics.gui.components import (
     header,
     sidebar,
-    tab_predefined,
-    tab_interpreter,
+    tab_accuracy,
     tab_admin,
     tab_drift_analysis,
-    tab_accuracy,
+    tab_interpreter,
+    tab_predefined,
 )
-
-from runtime_analytics.app_config.config import settings
-from runtime_analytics.app_db.db_loader import load_df_from_db, create_indexes
-from runtime_analytics.app_db.db_operations import save_df_to_db
-from runtime_analytics.etl.loader import load_logs_from_folder
 
 
 def load_data_if_needed():
@@ -34,9 +37,7 @@ def load_data_if_needed():
 
         df_loaded = st.session_state.get("df")
         loaded_dates = (
-            df_loaded["run_date"].unique()
-            if isinstance(df_loaded, pd.DataFrame) and "run_date" in df_loaded.columns
-            else []
+            df_loaded["run_date"].unique() if isinstance(df_loaded, pd.DataFrame) and "run_date" in df_loaded.columns else []
         )
         needs_reload = df_loaded is None or latest_date not in loaded_dates
 
@@ -54,7 +55,6 @@ def load_data_if_needed():
     except Exception as e:
         logger.exception("Failed to load data")
         st.error(f"Error loading data: {e}")
-
 
 
 header.set_layout()
@@ -80,13 +80,15 @@ elif mode == "Parse from logs":
             st.success(f"Parsed and saved {len(df)} logs to the database.")
 
 
-tabs = st.tabs([
-    "Predefined Prompts",
-    "AI Prompt Interpreter",
-    "Admin",
-    "Sequence & Drift Analysis",
-    "Visualise Prediction Accuracy (trained vs actual)"
-])
+tabs = st.tabs(
+    [
+        "Predefined Prompts",
+        "AI Prompt Interpreter",
+        "Admin",
+        "Sequence & Drift Analysis",
+        "Visualise Prediction Accuracy (trained vs actual)",
+    ]
+)
 
 if st.button("Refresh Data"):
     st.session_state.pop("df", None)
