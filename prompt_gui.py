@@ -5,13 +5,14 @@ import time
 
 import pandas as pd
 import streamlit as st
-from loguru import logger
 
+import logging
 from runtime_analytics.app_config.config import settings
 from runtime_analytics.app_db.db_loader import create_indexes, load_df_from_db
 from runtime_analytics.app_db.db_operations import save_df_to_db
-from runtime_analytics.etl.loader import load_logs_from_folder
+from runtime_analytics.etl.loader import ETLLogLoader
 
+logger = logging.getLogger(__name__)
 # Component imports
 from runtime_analytics.gui.components import (
     header,
@@ -29,8 +30,9 @@ def load_data_if_needed():
     try:
         with sqlite3.connect(settings.log_db_path) as conn:
             result = conn.execute("SELECT MAX(run_date) FROM job_logs").fetchone()
+            logger.info(f"Latest run_date from DB: {result}")
             latest_date = result[0] if result and result[0] else None
-
+            logger.info(f"Latest run_date: {latest_date}")
         if not latest_date:
             st.warning("No job logs found in database.")
             return
@@ -70,7 +72,9 @@ if mode == "Live from DB":
 
 elif mode == "Parse from logs":
     with st.spinner("Parsing logs and loading into database..."):
-        df = load_logs_from_folder(settings.bootstrap_dir)
+        logger.info("Parsing logs and loading into database...")
+        etl_loader=ETLLogLoader(settings.bootstrap_dir, save_to_db=False)
+        df = etl_loader.load()
         if df.empty:
             st.warning("No valid logs found in the log folder.")
         else:

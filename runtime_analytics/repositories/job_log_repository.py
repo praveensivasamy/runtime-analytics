@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 
 import pandas as pd
-from loguru import logger
 
 from runtime_analytics.app_db.db_loader import load_df_from_db
 from runtime_analytics.utils.filters import apply_filters
+
+logger = logging.getLogger(__name__)
 
 
 def get_logs_for_yesterday() -> pd.DataFrame:

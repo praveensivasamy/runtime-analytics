@@ -1,17 +1,20 @@
 import io
+import logging
 import sqlite3
 
 import pandas as pd
 import streamlit as st
-from loguru import logger
 
 from runtime_analytics.app_config.config import settings
 from runtime_analytics.app_db.db_loader import load_df_from_db
 from runtime_analytics.prompts import PREDEFINED_PROMPTS
 
+logger = logging.getLogger(__name__)
+
 
 def render(tab, mode, df):
     with tab:
+        logger.info("Rendering Predefined Prompts tab...")
         # Always load latest data on tab open
         with sqlite3.connect(settings.log_db_path) as conn:
             latest_date = conn.execute("SELECT MAX(run_date) FROM job_logs").fetchone()[0]
@@ -36,10 +39,10 @@ def render(tab, mode, df):
         try:
             # Show data range info
             if "timestamp" in df.columns:
-                min_ts = pd.to_datetime(df["timestamp"]).min()
-                max_ts = pd.to_datetime(df["timestamp"]).max()
-                st.info(f"Input data covers from **{min_ts.date()}** to **{max_ts.date()}** with {len(df)} records total.")
-
+                df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+                min_ts = df["timestamp"].min()
+                max_ts = df["timestamp"].max()
+                st.info(f"Input data covers from **{min_ts.date()}** to **{max_ts.date()}** " f"with {len(df)} records total.")
             result: pd.DataFrame = func(df, **params)
             if result.empty:
                 st.warning("The function returned no data.")
@@ -50,11 +53,7 @@ def render(tab, mode, df):
 
             csv_buffer = io.StringIO()
             result.to_csv(csv_buffer, index=False)
-            st.download_button(
-                "Download CSV",
-                data=csv_buffer.getvalue(),
-                file_name=f"{selected_prompt.replace(' ', '_')}.csv",
-            )
+            st.download_button("Download CSV", data=csv_buffer.getvalue(), file_name=f"{selected_prompt.replace(' ', '_')}.csv")
         except Exception as e:
             logger.exception("Predefined prompt execution failed")
             st.error(f"Error running prompt: {e}")

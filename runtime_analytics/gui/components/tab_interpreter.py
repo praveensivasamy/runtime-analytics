@@ -1,17 +1,20 @@
+import logging
 import sqlite3
 
 import pandas as pd
 import streamlit as st
-from loguru import logger
 
 from runtime_analytics.app_config.config import settings
 from runtime_analytics.app_db.db_loader import load_df_from_db
 from runtime_analytics.prompt_interpreter import interpret_prompt
 from runtime_analytics.prompts import FUNCTION_MAP
 
+logger = logging.getLogger(__name__)
+
 
 def render(tab, mode: str, df: pd.DataFrame = None):
     with tab:
+        logger.info("Rendering AI Prompt Interpreter tab...")
         st.subheader("AI Prompt Interpreter")
         # Always load fresh data
         with sqlite3.connect(settings.log_db_path) as conn:

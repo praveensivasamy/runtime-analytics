@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import logging
 import sqlite3
 from typing import Any
 
 import pandas as pd
-from loguru import logger
 
 from runtime_analytics.app_config.config import settings
 from runtime_analytics.app_db.db_operations import ensure_db_initialized, save_df_to_db
-from runtime_analytics.etl.loader import load_logs_from_folder
+from runtime_analytics.etl.loader import ETLLogLoader
+
+logger = logging.getLogger(__name__)
 
 
 def create_indexes(table_name: str = "job_logs") -> None:
@@ -58,7 +60,8 @@ def load_df_from_db(table_name: str = "job_logs", filters: dict[str, Any] | None
 
 
 def init_or_update_db(force_refresh: bool = False) -> None:
-    table_name = "logs"
+    logger.info(f"Initializing or updating the database with force_refresh {force_refresh}")
+    table_name = "job_logs"
     ensure_db_initialized(table_name)
 
     latest_ts: pd.Timestamp | None = None
@@ -67,9 +70,8 @@ def init_or_update_db(force_refresh: bool = False) -> None:
             result = conn.execute(f"SELECT MAX(timestamp) FROM {table_name}").fetchone()
             if result and result[0]:
                 latest_ts = pd.to_datetime(result[0])
-
-    df = load_logs_from_folder(settings.bootstrap_dir, save_to_db=False)
-
+    etl_loader = ETLLogLoader(settings.bootstrap_dir, save_to_db=False)
+    df = etl_loader.load()
     if df.empty:
         logger.warning("No logs found.")
         return
@@ -85,4 +87,4 @@ def init_or_update_db(force_refresh: bool = False) -> None:
 
     save_df_to_db(df, if_exists="append")
     create_indexes()
-    logger.success(f"{len(df)} new rows inserted {'(full refresh)' if force_refresh else '(filtered by timestamp)'}")
+    logger.info(f"{len(df)} new rows inserted {'(full refresh)' if force_refresh else '(filtered by timestamp)'}")

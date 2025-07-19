@@ -1,5 +1,8 @@
+import logging
+
 import pandas as pd
-from loguru import logger
+
+logger = logging.getLogger(__name__)
 
 
 def apply_filters(df: pd.DataFrame, filters: dict) -> pd.DataFrame:

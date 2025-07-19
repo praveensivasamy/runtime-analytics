@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 
 import pandas as pd
@@ -6,9 +7,12 @@ from sklearn.metrics import mean_squared_error
 
 from runtime_analytics.app_config.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 def render(tab):
     with tab:
+        logger.info("Rendering Sequence & Drift Analysis tab...")
         st.subheader("Sequence & Drift Analysis")
 
         # Check if the trained model and prediction table exist
@@ -46,11 +50,7 @@ def render(tab):
         else:
             st.warning("Detected sequence skips:")
             st.dataframe(anomalies[["run_date", "job_order", "job_sequence", "sequence_diff"]])
-            st.download_button(
-                "Download Anomalies CSV",
-                data=anomalies.to_csv(index=False),
-                file_name="sequence_anomalies.csv",
-            )
+            st.download_button("Download Anomalies CSV", data=anomalies.to_csv(index=False), file_name="sequence_anomalies.csv")
 
         st.markdown("#### Prediction Drift Over Time")
         st.line_chart(df_filtered.set_index("timestamp")[["duration", "predicted_duration"]].sort_index())

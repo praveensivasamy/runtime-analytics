@@ -17,11 +17,12 @@ scikit-learn = ">=1.4.2"
 numpy = ">=1.26.4"
 sqlite-utils = ">=3.36.0"
 pyyaml = ">=6.0"
-sentence-transformers = "==2.2.2"                # compatible with transformers>=4.6.0
+tokenizers =">= 0.19"
+sentence-transformers = "^2.7.0"             # compatible with transformers>=4.6.0
 matplotlib = ">=3.10.3"
-loguru = "^0.7.3"
+huggingface-hub = ">=0.20.3"
 
-# CLI, lint, test, etc. should go to dev group
+
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.4.1"
 ruff = "^0.4.4"                                   # Use latest for pyproject compatibility
@@ -30,13 +31,10 @@ isort = "^5.13.2"
 safety = ">=2.3.5"
 pylint = "^3.3.7"
 mypy = "^1.16.1"
-
-# -----------------------------
-# Black Configuration
-# -----------------------------
 types-pyyaml = "^6.0.12.20250516"
 types-requests = "^2.32.4.20250611"
 pandas-stubs = "^2.3.0.250703"
+
 [tool.black]
 line-length = 130
 target-version = ["py312"]
@@ -54,7 +52,7 @@ line_length = 130
 # -----------------------------
 [tool.ruff]
 line-length = 130
-lint.select = ["F401", "RUF034", "FA100", "ARG"]
+lint.select = ["F401", "FA100", "ARG"]
 lint.ignore = ["E741"]
 
 [tool.ruff.lint.extend-per-file-ignores]
@@ -71,7 +69,11 @@ exclude = '''(?x)( ^\.venv.*|^\.mypy_cache|^\.pytest_cache|^build|^dist)'''
 follow_imports = "silent"
 python_version = "3.12"
 
-
+[tool.pylint]
+disable = [
+    "missing-module-docstring",
+   "logging-format-interpolation",
+]
 [[tool.mypy.overrides]]
 module = "*"
 disallow_untyped_calls = false

@@ -1,11 +1,13 @@
+import logging
 import re
 from datetime import datetime, timedelta
 
 import yaml
-from loguru import logger
 from sentence_transformers import SentenceTransformer, util
 
 from runtime_analytics.app_config.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def load_prompt_catalog(yaml_path=None):

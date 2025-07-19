@@ -7,17 +7,7 @@ from sklearn.pipeline import Pipeline
 
 from runtime_analytics.app_config.config import settings
 from runtime_analytics.app_db.db_operations import save_df_to_db
-from runtime_analytics.etl.loader import extract_features
 
-# Set up logging
-logging.basicConfig(
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    level=logging.INFO,
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("predict_duration_model.log"),
-    ],
-)
 logger = logging.getLogger(__name__)
 
 NUMERICAL_FEATURES = [
@@ -72,7 +62,7 @@ def predict_response_times(db_path=None, model_path=None, top_n=10, save_to_db=T
         logger.info(f"Loaded {len(df)} records from the database.")
 
         df = df.dropna(subset=FEATURE_COLUMNS)
-        df = extract_features(df)
+        # df = extract_features(df)
 
         logger.info("Making predictions...")
         df["predicted_duration"] = pipeline.predict(df[FEATURE_COLUMNS])

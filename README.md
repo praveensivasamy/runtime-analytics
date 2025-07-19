@@ -46,9 +46,7 @@ runtime_analytics_project/logs/
 
 ## 📦 Install Requirements
 
-```bash
-pip install -r requirements.txt
-```
+
 
 ## 🧪 Example Prompts
 

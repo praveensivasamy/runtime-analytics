@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import sqlite3
 
 import matplotlib.pyplot as plt
@@ -9,9 +10,12 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from runtime_analytics.app_config.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 def render(tab):
     with tab:
+        logger.info("Rendering Prediction Accuracy tab...")
         st.subheader("Prediction Accuracy")
 
         db_path = settings.log_db_path
@@ -53,12 +57,7 @@ def render(tab):
 
         fig1, ax1 = plt.subplots()
         ax1.scatter(y_true, y_pred, alpha=0.4)
-        ax1.plot(
-            [y_true.min(), y_true.max()],
-            [y_true.min(), y_true.max()],
-            color="red",
-            linestyle="--",
-        )
+        ax1.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], color="red", linestyle="--")
         ax1.set_xlabel("Actual Duration")
         ax1.set_ylabel("Predicted Duration")
         ax1.set_title("Actual vs Predicted")

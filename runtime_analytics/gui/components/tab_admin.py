@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 
 import streamlit as st
@@ -8,16 +9,17 @@ from runtime_analytics.app_config.config import settings
 from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
 from runtime_analytics.ml.pipeline.train_duration_prediction import train_pipeline_model
 
+logger = logging.getLogger(__name__)
+
 
 def render(tab):
     with tab:
+        logger.info("Rendering Admin tab...")
         st.subheader("Admin Tools")
         st.markdown("Use these controls to manage training, prediction, and prompt data.")
         if st.button("Regenerate Training Prompts CSV"):
             with st.spinner("Regenerating training prompts..."):
-                from runtime_analytics.scripts.generate_training_csv import (
-                    generate_training_prompts_csv,
-                )
+                from runtime_analytics.scripts.generate_training_csv import generate_training_prompts_csv
 
                 output_path = settings.resource_dir / "training_prompts.csv"
                 generate_training_prompts_csv(output_path)
@@ -25,9 +27,7 @@ def render(tab):
 
         if st.button("Train Prompt Model"):
             with st.spinner("Training prompt model..."):
-                from runtime_analytics.scripts.train_prompt_model_cli import (
-                    main as train_prompt_model,
-                )
+                from runtime_analytics.scripts.train_prompt_model_cli import main as train_prompt_model
 
                 train_prompt_model()
                 st.success("✅ Prompt model training complete.")

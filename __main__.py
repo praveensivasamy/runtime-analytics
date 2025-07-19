@@ -8,23 +8,24 @@ import sys
 import pandas as pd
 
 from runtime_analytics.app_config.config import settings
-from runtime_analytics.app_config.logger import setup_logging
 from runtime_analytics.app_db.db_loader import create_indexes, init_or_update_db, load_df_from_db
 from runtime_analytics.app_db.db_operations import save_df_to_db
-from runtime_analytics.etl.loader import load_logs_from_folder
+from runtime_analytics.etl.loader import ETLLogLoader
+
 from runtime_analytics.ml.pipeline.predict_duration import predict_response_times
 from runtime_analytics.prompt_interpreter import interpret_prompt
 from runtime_analytics.prompts import FUNCTION_MAP, PREDEFINED_PROMPTS
+from runtime_analytics.scripts.train_prompt_model_cli import main as train_model_main
 
-# Initialize logging
-setup_logging()
+
 logger = logging.getLogger(__name__)
 
 
 def run_cli(list_prompts=False, prompt_query=None, export_format="csv", from_logs=False):
     # Load data (from logs or DB)
     if from_logs:
-        df = load_logs_from_folder(settings.bootstrap_dir)
+        etl_loader = ETLLogLoader(settings.bootstrap_dir)
+        df = etl_loader.load()
         if df.empty:
             logger.warning("No valid logs found in the folder.")
             sys.exit(1)
@@ -110,18 +111,13 @@ def main():
     args = parser.parse_args()
 
     if args.mode == "cli":
-        run_cli(
-            list_prompts=args.list_prompts,
-            prompt_query=args.prompt,
-            export_format=args.format,
-            from_logs=args.from_logs,
-        )
+        logger.info("Running in CLI mode...")
+        run_cli(list_prompts=args.list_prompts, prompt_query=args.prompt, export_format=args.format, from_logs=args.from_logs)
     elif args.mode == "gui":
+        logger.info("Running in GUI mode...")
         run_gui()
 
     if args.train_prompts:
-        from runtime_analytics.scripts.train_prompt_model_cli import main as train_model_main
-
         train_model_main()
 
 

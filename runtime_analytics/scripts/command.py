@@ -9,11 +9,7 @@ from typing import Iterable
 _TARGET_DIRECTORIES: tuple[str, ...] = ("runtime_analytics", "tests")
 
 
-def run_command(
-    *args: str,
-    check_args: Iterable[str] = (),
-    fix_args: Iterable[str] = (),
-) -> None:
+def run_command(*args: str, check_args: Iterable[str] = (), fix_args: Iterable[str] = ()) -> None:
     """
     Run a shell command with optional `--fix` or `--check` mode.
 
@@ -33,7 +29,7 @@ def run_command(
     result = subprocess.run(command, check=False, text=True, capture_output=True)
 
     if result.returncode != 0:
-        print(f"\n❌ Failed (exit code: {result.returncode})")
+        print(f"\nFailed (exit code: {result.returncode})")
         print(result.stdout)
         print(result.stderr)
         sys.exit(result.returncode)
@@ -68,13 +64,7 @@ def sort_imports() -> None:
         - If '--fix' is passed, it will apply sorting.
         - Otherwise, it checks and reports unsorted imports.
     """
-    run_command(
-        "isort",
-        "--gitignore",
-        "--profile", "black",
-        *_TARGET_DIRECTORIES,
-        check_args=["--check-only"],
-    )
+    run_command("isort", "-v", "--gitignore", "--profile", "black", *_TARGET_DIRECTORIES, check_args=["--check-only"])
 
 
 def type_check() -> None:
