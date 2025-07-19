@@ -37,8 +37,7 @@ NUMERICAL_FEATURES = [
 CATEGORICAL_FEATURES = ["day", "month", "week", "job_order", "type"]
 FEATURE_COLUMNS = NUMERICAL_FEATURES + CATEGORICAL_FEATURES
 TARGET = "duration"
-MODEL_PATH = settings.base_dir / "ml" / "pipeline" / \
-    "trained" / "duration_prediction_model.pkl"
+MODEL_PATH = settings.base_dir / "ml" / "pipeline" / "trained" / "duration_prediction_model.pkl"
 
 
 def train_pipeline_model(
@@ -88,21 +87,24 @@ def train_pipeline_model(
 
         # Create a pipeline with preprocessor and regressor
         preprocessor = ColumnTransformer(
-            [("num", StandardScaler(), NUMERICAL_FEATURES), ("cat",
-                                                             OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES)]
+            [
+                ("num", StandardScaler(), NUMERICAL_FEATURES),
+                ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES),
+            ]
         )
 
         pipeline = Pipeline(
             [
                 ("preprocessor", preprocessor),
-                ("regressor", RandomForestRegressor(
-                    n_estimators=100, random_state=random_state, n_jobs=-1)),
+                (
+                    "regressor",
+                    RandomForestRegressor(n_estimators=100, random_state=random_state, n_jobs=-1),
+                ),
             ]
         )
 
         logger.info("Splitting data...")
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
 
         logger.info("Fitting pipeline to training data...")
         pipeline.fit(X_train, y_train)
@@ -132,8 +134,7 @@ def train_pipeline_model(
             conn.commit()
 
         if verbose:
-            print(
-                f"Model trained in {elapsed:.2f} seconds with RMSE: {rmse:.2f} using {len(df)} samples.")
+            print(f"Model trained in {elapsed:.2f} seconds with RMSE: {rmse:.2f} using {len(df)} samples.")
 
     except Exception as e:
         logger.error(f"An error occurred during training: {e}")

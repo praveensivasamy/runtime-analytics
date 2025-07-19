@@ -60,7 +60,11 @@ PREDEFINED_PROMPTS = {
     "Average Duration by Type": {
         "data_source": repo.get_all_logs,
         "function": aggregate_by_field,
-        "params": {"group_by": "type", "agg_field": "duration_sec", "operations": ["mean"]},
+        "params": {
+            "group_by": "type",
+            "agg_field": "duration_sec",
+            "operations": ["mean"],
+        },
     },
     "Prediction Accuracy per Job Type": {
         "data_source": repo.get_all_logs,

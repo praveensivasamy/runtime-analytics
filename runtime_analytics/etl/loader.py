@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    df["timestamp"] = pd.to_datetime(
-        df["timestamp"], format="%Y-%m-%d %H:%M:%S,%f", errors="coerce")
+    df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%d %H:%M:%S,%f", errors="coerce")
     df["riskdate"] = pd.to_datetime(df["riskdate"], errors="coerce")
     df["run_date"] = pd.to_datetime(df["run_date"], errors="coerce")
 
@@ -34,14 +33,11 @@ def extract_features(df: pd.DataFrame) -> pd.DataFrame:
     df["quarter_end"] = df["timestamp"].dt.is_quarter_end.astype(int)
     df["year_end"] = df["timestamp"].dt.is_year_end.astype(int)
 
-    df["job_id"] = df["riskdate"].dt.strftime(
-        "%Y-%m-%d") + "_" + df["id"].astype(str) + "_" + df["type"].astype(str)
+    df["job_id"] = df["riskdate"].dt.strftime("%Y-%m-%d") + "_" + df["id"].astype(str) + "_" + df["type"].astype(str)
     df["job_count"] = df.groupby("run_date")["job_id"].transform("count")
-    df["job_sequence"] = df.groupby(["run_date", "job_id"])[
-        "timestamp"].rank(method="first").astype(int)
+    df["job_sequence"] = df.groupby(["run_date", "job_id"])["timestamp"].rank(method="first").astype(int)
     df["job_run_count"] = df.groupby(["run_date", "job_id"]).cumcount() + 1
-    df["job_order"] = df["job_sequence"].astype(
-        str) + " of " + df["job_count"].astype(str)
+    df["job_order"] = df["job_sequence"].astype(str) + " of " + df["job_count"].astype(str)
 
     return df
 
@@ -66,8 +62,7 @@ def load_logs_from_folder(folder_path: str, save_to_db: bool = True) -> pd.DataF
                 # only move successfully parsed files
                 files_to_move.append(file)
             else:
-                logger.warning(
-                    f"No valid lines found in {file.name}, skipping move.")
+                logger.warning(f"No valid lines found in {file.name}, skipping move.")
         except Exception as e:
             logger.warning(f"Failed to parse {file.name}: {e}")
 

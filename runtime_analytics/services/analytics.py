@@ -26,13 +26,15 @@ def top_slow_jobs_grouped(df: pd.DataFrame, n: int = 10, **kwargs) -> pd.DataFra
     df["timestamp"] = pd.to_datetime(df["timestamp"])
 
     top_jobs = (
-        df.groupby(["job_id", "timestamp"], as_index=False)[
-            "duration"].max().sort_values(by="duration", ascending=False).head(n)
+        df.groupby(["job_id", "timestamp"], as_index=False)["duration"].max().sort_values(by="duration", ascending=False).head(n)
     )
     top_jobs["rank"] = range(1, len(top_jobs) + 1)
 
-    df_top = df.merge(top_jobs[["job_id", "timestamp", "rank"]], on=[
-                      "job_id", "timestamp"], how="inner")
+    df_top = df.merge(
+        top_jobs[["job_id", "timestamp", "rank"]],
+        on=["job_id", "timestamp"],
+        how="inner",
+    )
 
     df_top["month"] = df_top["timestamp"].dt.strftime("%B")
     df_top["week"] = df_top["timestamp"].dt.strftime("%U_%Y")
@@ -91,21 +93,34 @@ def prediction_accuracy_per_job_type(df: pd.DataFrame, **kwargs) -> pd.DataFrame
 
 def top_anomaly_scores(df: pd.DataFrame, n: int = 10, **kwargs) -> pd.DataFrame:
     if "anomaly_score" not in df.columns:
-        return pd.DataFrame(columns=["riskdate", "id", "type", "anomaly_score", "run_timestamp", "config_count", "run_id"])
+        return pd.DataFrame(
+            columns=[
+                "riskdate",
+                "id",
+                "type",
+                "anomaly_score",
+                "run_timestamp",
+                "config_count",
+                "run_id",
+            ]
+        )
 
-    df["run_group"] = df["riskdate"].astype(
-        str) + "_" + df["id"].astype(str) + "_" + df["type"].astype(str)
-    df["run_number"] = df.groupby(
-        "run_group")["run_timestamp"].rank("first").astype(int)
-    df["total_runs"] = df.groupby(
-        "run_group")["run_timestamp"].transform("count")
+    df["run_group"] = df["riskdate"].astype(str) + "_" + df["id"].astype(str) + "_" + df["type"].astype(str)
+    df["run_number"] = df.groupby("run_group")["run_timestamp"].rank("first").astype(int)
+    df["total_runs"] = df.groupby("run_group")["run_timestamp"].transform("count")
 
-    top_groups = df.groupby("run_group")["anomaly_score"].max(
-    ).sort_values(ascending=False).head(n).index
+    top_groups = df.groupby("run_group")["anomaly_score"].max().sort_values(ascending=False).head(n).index
     df_top = df[df["run_group"].isin(top_groups)].copy()
-    df_top["run_id"] = df_top["run_number"].astype(
-        str) + " of " + df_top["total_runs"].astype(str)
+    df_top["run_id"] = df_top["run_number"].astype(str) + " of " + df_top["total_runs"].astype(str)
 
-    return df_top[["riskdate", "id", "type", "anomaly_score", "run_timestamp", "config_count", "run_id"]].sort_values(
-        by="anomaly_score", ascending=False
-    )
+    return df_top[
+        [
+            "riskdate",
+            "id",
+            "type",
+            "anomaly_score",
+            "run_timestamp",
+            "config_count",
+            "run_id",
+        ]
+    ].sort_values(by="anomaly_score", ascending=False)

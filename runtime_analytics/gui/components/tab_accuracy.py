@@ -15,28 +15,22 @@ def render(tab):
         st.subheader("Prediction Accuracy")
 
         db_path = settings.log_db_path
-        model_path = settings.base_dir / "ml" / "pipeline" / \
-            "trained" / "duration_prediction_model.pkl"
+        model_path = settings.base_dir / "ml" / "pipeline" / "trained" / "duration_prediction_model.pkl"
 
         if not model_path.exists():
-            st.warning(
-                "Prediction model not found. Please train the model using the Admin tab.")
+            st.warning("Prediction model not found. Please train the model using the Admin tab.")
             return
 
         try:
             with sqlite3.connect(db_path) as conn:
-                table_names = pd.read_sql(
-                    "SELECT name FROM sqlite_master WHERE type='table'", conn)
+                table_names = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'", conn)
                 if "job_logs_with_predictions" not in table_names["name"].values:
-                    st.warning(
-                        "Predictions table not found. Please run predictions from the Admin tab.")
+                    st.warning("Predictions table not found. Please run predictions from the Admin tab.")
                     return
 
-                df = pd.read_sql(
-                    "SELECT * FROM job_logs_with_predictions", conn)
+                df = pd.read_sql("SELECT * FROM job_logs_with_predictions", conn)
 
-            df["timestamp"] = pd.to_datetime(
-                df["timestamp"], format="%Y-%m-%d %H:%M:%S,%f", errors="coerce")
+            df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%d %H:%M:%S,%f", errors="coerce")
 
         except Exception as e:
             st.error(f"Error loading prediction data: {e}")
@@ -59,8 +53,12 @@ def render(tab):
 
         fig1, ax1 = plt.subplots()
         ax1.scatter(y_true, y_pred, alpha=0.4)
-        ax1.plot([y_true.min(), y_true.max()], [y_true.min(),
-                 y_true.max()], color="red", linestyle="--")
+        ax1.plot(
+            [y_true.min(), y_true.max()],
+            [y_true.min(), y_true.max()],
+            color="red",
+            linestyle="--",
+        )
         ax1.set_xlabel("Actual Duration")
         ax1.set_ylabel("Predicted Duration")
         ax1.set_title("Actual vs Predicted")

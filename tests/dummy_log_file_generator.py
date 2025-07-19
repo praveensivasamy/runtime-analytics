@@ -17,8 +17,7 @@ def unique_random_timestamp_on(date_obj, used_timestamps):
         minute = random.randint(0, 59)
         second = random.randint(0, 59)
         microsecond = random.randint(0, 999999)
-        dt = datetime.combine(date_obj, time(
-            hour, minute, second, microsecond))
+        dt = datetime.combine(date_obj, time(hour, minute, second, microsecond))
         timestamp = dt.strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
         if timestamp not in used_timestamps:
             used_timestamps.add(timestamp)
@@ -60,8 +59,7 @@ while current_date <= end_date:
     current_date += timedelta(days=1)
 
 # Save log file
-log_file_path = Path(
-    f"../runtime_analytics/bootstrap/dummy_runtime_logs_{end_date}.txt")
+log_file_path = Path(f"../runtime_analytics/bootstrap/dummy_runtime_logs_{end_date}.txt")
 log_file_path.parent.mkdir(parents=True, exist_ok=True)
 with open(log_file_path, "w") as f:
     f.write("\n".join(log_lines))

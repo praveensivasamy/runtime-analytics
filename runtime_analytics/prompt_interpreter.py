@@ -34,24 +34,19 @@ def extract_params_from_prompt(prompt: str) -> dict:
     today = datetime.today()
     if "this week" in prompt:
         start = today - timedelta(days=today.weekday())
-        params.setdefault("filters", {})[
-            "run_date >= "] = start.strftime("%Y-%m-%d")
+        params.setdefault("filters", {})["run_date >= "] = start.strftime("%Y-%m-%d")
     elif "this month" in prompt:
         start = today.replace(day=1)
-        params.setdefault("filters", {})[
-            "run_date >= "] = start.strftime("%Y-%m-%d")
+        params.setdefault("filters", {})["run_date >= "] = start.strftime("%Y-%m-%d")
     elif "this year" in prompt:
         start = today.replace(month=1, day=1)
-        params.setdefault("filters", {})[
-            "run_date >= "] = start.strftime("%Y-%m-%d")
+        params.setdefault("filters", {})["run_date >= "] = start.strftime("%Y-%m-%d")
     elif "yesterday" in prompt:
         start = today - timedelta(days=1)
-        params.setdefault("filters", {})[
-            "run_date = "] = start.strftime("%Y-%m-%d")
+        params.setdefault("filters", {})["run_date = "] = start.strftime("%Y-%m-%d")
     elif "last 7 days" in prompt or "past 7 days" in prompt:
         start = today - timedelta(days=7)
-        params.setdefault("filters", {})[
-            "run_date >= "] = start.strftime("%Y-%m-%d")
+        params.setdefault("filters", {})["run_date >= "] = start.strftime("%Y-%m-%d")
 
     return params
 
@@ -59,8 +54,7 @@ def extract_params_from_prompt(prompt: str) -> dict:
 class PromptInterpreter:
     def __init__(self, model_name="all-MiniLM-L6-v2", catalog_path=None):
         self.model = SentenceTransformer(model_name)
-        self.catalog_path = catalog_path or (
-            settings.resource_dir / "prompt_catalog.yaml")
+        self.catalog_path = catalog_path or (settings.resource_dir / "prompt_catalog.yaml")
         self.catalog = load_prompt_catalog(self.catalog_path)
 
     def interpret(self, prompt: str) -> dict:
@@ -72,8 +66,7 @@ class PromptInterpreter:
 
         for entry in self.catalog:
             for example in entry.get("examples", []):
-                example_embedding = self.model.encode(
-                    example, convert_to_tensor=True)
+                example_embedding = self.model.encode(example, convert_to_tensor=True)
                 score = float(util.cos_sim(user_embedding, example_embedding))
                 if score > best_score:
                     best_score = score
@@ -87,8 +80,7 @@ class PromptInterpreter:
         extracted = extract_params_from_prompt(prompt)
         params.update(extracted)
 
-        logger.info(
-            f"Matched function: {best_intent['function']} with params: {params}")
+        logger.info(f"Matched function: {best_intent['function']} with params: {params}")
         return {"function": best_intent["function"], "params": params}
 
 

@@ -31,8 +31,7 @@ def ensure_db_initialized(table_name: str = "job_logs"):
 
 
 def log_sql_queries(query: str, values: list):
-    logger.debug(
-        f"Executing SQL: {query} | Values: {values[:5]}{'...' if len(values) > 5 else ''}")
+    logger.debug(f"Executing SQL: {query} | Values: {values[:5]}{'...' if len(values) > 5 else ''}")
 
 
 def save_df_to_db(df: pd.DataFrame, table_name: str = "job_logs", if_exists: str = "append"):
@@ -67,9 +66,8 @@ def save_df_to_db(df: pd.DataFrame, table_name: str = "job_logs", if_exists: str
     with sqlite3.connect(settings.log_db_path) as conn:
         cursor = conn.cursor()
         for i in range(0, len(values), 5000):
-            batch = values[i: i + 5000]
+            batch = values[i : i + 5000]
             cursor.executemany(insert_sql, batch)
         conn.commit()
 
-    logger.success(
-        f"{len(values)} records processed and saved to '{table_name}'")
+    logger.success(f"{len(values)} records processed and saved to '{table_name}'")

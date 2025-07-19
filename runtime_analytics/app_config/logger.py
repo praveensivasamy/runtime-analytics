@@ -13,11 +13,16 @@ def setup_logging(log_level: str = "INFO") -> None:
     level = getattr(logging, log_level.upper(), logging.INFO)
 
     formatter = logging.Formatter(
-        fmt="%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        fmt="%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     file_handler = TimedRotatingFileHandler(
-        logs_path / "runtime_analytics.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
+        logs_path / "runtime_analytics.log",
+        when="midnight",
+        interval=1,
+        backupCount=7,
+        encoding="utf-8",
     )
     file_handler.setFormatter(formatter)
 

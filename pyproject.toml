@@ -3,9 +3,7 @@ name = "runtime-analytics"
 version = "0.1.0"
 description = "A lightweight log analysis tool with prompt-based querying and GUI"
 authors = ["Praveen Sivasamy"]
-packages = [
-    { include = "runtime_analytics" }
-]
+packages = [{ include = "runtime_analytics" }]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
@@ -13,61 +11,64 @@ pandas = ">=2.2.0"
 streamlit = ">=1.33.0"
 pyarrow = ">=15.0.0"
 sqlalchemy = ">=2.0.30"
-pydantic = ">=2.11.5,<3.0.0"                       # pinned major version for stability
-pydantic-settings = ">=2.9.1"
+pydantic = ">=2.11.5,<3.0.0"                      # pinned for major-version stability
+pydantic-settings = ">=2.1.0"
 scikit-learn = ">=1.4.2"
 numpy = ">=1.26.4"
 sqlite-utils = ">=3.36.0"
 pyyaml = ">=6.0"
-sentence-transformers = "4.1.0"                   # fixed version to avoid model embedding incompatibility
+sentence-transformers = "==2.2.2"                # compatible with transformers>=4.6.0
 matplotlib = ">=3.10.3"
-pytest = ">=8.4.1"
 loguru = "^0.7.3"
 
-
+# CLI, lint, test, etc. should go to dev group
 [tool.poetry.group.dev.dependencies]
+pytest = ">=8.4.1"
+ruff = "^0.4.4"                                   # Use latest for pyproject compatibility
 black = ">=24.4.2"
-safety = ">=2.3.5"                                # adds vulnerability scanning
-isort = "^6.0.1"
+isort = "^5.13.2"
+safety = ">=2.3.5"
 pylint = "^3.3.7"
 mypy = "^1.16.1"
 
 # -----------------------------
-# isort: Import Sorting
-# -----------------------------
-[tool.isort]
-combine_as_imports = true
-force_single_line = false
-line_length = 130
-known_first_party = ["runtime_analytics"]
-src_paths = ["runtime_analytics", "tests"]  # Specify directories to sort imports
-
-# -----------------------------
-# Pylint: Linting
-# -----------------------------
-[tool.pylint]
-disable = "C0111,C0103,W1203"  # Disable some default warnings, like missing docstring and invalid names
-max-line-length = 130
-output-format = "text"
-
-# -----------------------------
-# mypy: Type Checking
-# -----------------------------
-[mypy]
-# Enable strict type checking
-strict = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-show_column_numbers = true
-check_untyped_defs = true
-
-# -----------------------------
-# Black: Code Formatter
+# Black Configuration
 # -----------------------------
 [tool.black]
 line-length = 130
 target-version = ["py312"]
-skip-string-normalization = false  # Use double quotes
+
+# -----------------------------
+# isort Configuration
+# -----------------------------
+[tool.isort]
+profile = "black"
+combine_as_imports = true
+line_length = 130
+
+# -----------------------------
+# Ruff Configuration
+# -----------------------------
+[tool.ruff]
+line-length = 130
+lint.select = ["F401", "RUF034", "FA100", "ARG"]
+lint.ignore = ["E741"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = ["E402"]
+"__pycache__/*" = ["ALL"]
+
+# -----------------------------
+# MyPy Configuration
+# -----------------------------
+[tool.mypy]
+strict = true
+implicit_reexport = true
+plugins = ["numpy.typing.mypy_plugin"]
+
+[[tool.mypy.overrides]]
+module = "*"
+disallow_untyped_calls = false
 
 # -----------------------------
 # CLI Entry Points
@@ -75,5 +76,5 @@ skip-string-normalization = false  # Use double quotes
 [tool.poetry.scripts]
 format = "runtime_analytics.scripts.command:format"
 lint = "runtime_analytics.scripts.command:lint"
-check = "runtime_analytics.scripts.command:check"
+type_check = "runtime_analytics.scripts.command:type_check"
 sort_imports = "runtime_analytics.scripts.command:sort_imports"

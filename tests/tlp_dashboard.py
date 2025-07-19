@@ -25,8 +25,14 @@ else:
 
 # Summary Cards
 st.subheader("📊 Latest System Snapshot")
-latest_data = {"Charge": None, "Capacity": None,
-               "CPU": None, "GPU": None, "NVMe": None, "Fan": None}
+latest_data = {
+    "Charge": None,
+    "Capacity": None,
+    "CPU": None,
+    "GPU": None,
+    "NVMe": None,
+    "Fan": None,
+}
 if os.path.exists(log_path):
     with open(log_path) as f:
         for line in reversed(f.readlines()):
@@ -61,22 +67,21 @@ cols = st.columns(3)
 cols[0].metric("🔋 Charge", f"{latest_data['Charge']}%", delta=None)
 cols[1].metric("💾 Capacity", f"{latest_data['Capacity']}%", delta=None)
 cols[2].metric(
-    "🌬️ Fan RPM", f"{latest_data['Fan']} RPM" if latest_data["Fan"] else "N/A", delta=None)
+    "🌬️ Fan RPM",
+    f"{latest_data['Fan']} RPM" if latest_data["Fan"] else "N/A",
+    delta=None,
+)
 
 cols = st.columns(3)
-cols[0].metric(
-    "🌡️ CPU Temp", f"{latest_data['CPU']}°C" if latest_data["CPU"] else "N/A")
-cols[1].metric(
-    "🖥️ GPU Temp", f"{latest_data['GPU']}°C" if latest_data["GPU"] else "N/A")
-cols[2].metric(
-    "💽 NVMe Temp", f"{latest_data['NVMe']}°C" if latest_data["NVMe"] else "N/A")
+cols[0].metric("🌡️ CPU Temp", f"{latest_data['CPU']}°C" if latest_data["CPU"] else "N/A")
+cols[1].metric("🖥️ GPU Temp", f"{latest_data['GPU']}°C" if latest_data["GPU"] else "N/A")
+cols[2].metric("💽 NVMe Temp", f"{latest_data['NVMe']}°C" if latest_data["NVMe"] else "N/A")
 
 # Historical Threshold Change
 st.subheader("📈 Threshold Change History")
 if os.path.exists(csv_path):
     try:
-        df = pd.read_csv(csv_path, names=[
-                         "timestamp", "start", "stop", "prev_start", "prev_stop"])
+        df = pd.read_csv(csv_path, names=["timestamp", "start", "stop", "prev_start", "prev_stop"])
         df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
         df = df.dropna(subset=["timestamp"])
         df_plot = df[["timestamp", "start", "stop"]].set_index("timestamp")
