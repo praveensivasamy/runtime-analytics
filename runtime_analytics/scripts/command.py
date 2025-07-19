@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 from shlex import join
-from typing import Iterable, Sequence
+from typing import Iterable
 
 # Directories targeted by linting, formatting, typing, etc.
 _TARGET_DIRECTORIES: tuple[str, ...] = ("runtime_analytics", "tests")
@@ -24,24 +24,16 @@ def run_command(
 
     Behavior:
         - Adds either fix_args or check_args based on presence of '--fix' in sys.argv.
+        - Adds verbosity flags depending on the tool.
         - Displays the command being run.
         - Captures and prints stdout/stderr on failure.
-        - Exits the script with the subprocess return code if the command fails.
     """
     command: list[str] = [*args, *(fix_args if "--fix" in sys.argv else check_args)]
-    # Inject verbosity if applicable
-    tool = command[0]
-    if tool == "ruff":
-        command.append("--verbose")
-    elif tool == "isort":
-        command.append("-v")
-    elif tool == "mypy":
-        command.append("-v")
     print(f"$ {join(command)}")
     result = subprocess.run(command, check=False, text=True, capture_output=True)
 
     if result.returncode != 0:
-        print(f"\n Failed: (exit code: {result.returncode})")
+        print(f"\n❌ Failed (exit code: {result.returncode})")
         print(result.stdout)
         print(result.stderr)
         sys.exit(result.returncode)
@@ -70,18 +62,24 @@ def lint() -> None:
 
 def sort_imports() -> None:
     """
-    Sort imports using isort.
+    Sort imports using isort with Black-compatible profile.
 
     Behavior:
         - If '--fix' is passed, it will apply sorting.
         - Otherwise, it checks and reports unsorted imports.
     """
-    run_command("isort", "--gitignore", ".", check_args=["--check"])
+    run_command(
+        "isort",
+        "--gitignore",
+        "--profile", "black",
+        *_TARGET_DIRECTORIES,
+        check_args=["--check-only"],
+    )
 
 
 def type_check() -> None:
     """
-    Run type checking using MyPy with error codes.
+    Run type checking using MyPy with verbose output and error codes.
 
     Targets:
         - runtime_analytics/
