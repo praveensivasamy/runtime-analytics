@@ -21,6 +21,8 @@ tokenizers =">= 0.19"
 sentence-transformers = "^2.7.0"             # compatible with transformers>=4.6.0
 matplotlib = ">=3.10.3"
 huggingface-hub = ">=0.20.3"
+pygwalker = "^0.4.9.15"
+plotly = "^6.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def render(tab):
     with tab:
-        logger.info("Rendering Admin tab...")
+        logger.debug("Rendering Admin tab...")
         st.subheader("Admin Tools")
         st.markdown("Use these controls to manage training, prediction, and prompt data.")
         if st.button("Regenerate Training Prompts CSV"):

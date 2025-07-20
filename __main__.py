@@ -93,7 +93,7 @@ def run_cli(list_prompts=False, prompt_query=None, export_format="csv", from_log
 
 
 def run_gui():
-    subprocess.run([sys.executable, "-m", "streamlit", "run", "prompt_gui.py"], check=False)
+    subprocess.run([sys.executable, "-m", "streamlit", "run", "prompt_gui.py","--server.runOnSave", "false"], check=False)
 
 
 def main():

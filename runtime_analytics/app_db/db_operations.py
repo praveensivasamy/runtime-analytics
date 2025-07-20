@@ -83,7 +83,7 @@ def _to_python_type(val):
     return val
 
 
-def save_df_to_db(df: pd.DataFrame, table_name: str = "job_logs", if_exists: str = "append"):
+def save_df_to_db(df: pd.DataFrame, table_name: str = "job_logs"):
     required_columns = {"riskdate", "id", "type", "timestamp"}
     if not required_columns.issubset(df.columns):
         missing = required_columns - set(df.columns)

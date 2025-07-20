@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def render_sidebar():
-    logger.info("Rendering sidebar with data source options...")
+    logger.debug("Rendering sidebar with data source options...")
     mode = st.sidebar.radio("Data Source", ["Parse from logs", "Live from DB"], index=1)
     auto_refresh = st.sidebar.checkbox("Auto-refresh every 30s", value=False)
 

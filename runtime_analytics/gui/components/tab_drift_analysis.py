@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def render(tab):
     with tab:
-        logger.info("Rendering Sequence & Drift Analysis tab...")
+        logger.debug("Rendering Sequence & Drift Analysis tab...")
         st.subheader("Sequence & Drift Analysis")
 
         # Check if the trained model and prediction table exist

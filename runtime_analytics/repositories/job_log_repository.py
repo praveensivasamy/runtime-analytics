@@ -1,31 +1,51 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from datetime import datetime, timedelta
 
 import pandas as pd
 
-from runtime_analytics.app_db.db_loader import load_df_from_db
-from runtime_analytics.utils.filters import apply_filters
+from runtime_analytics.app_config.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def get_logs_for_yesterday() -> pd.DataFrame:
-    """Fetch logs where run_date is yesterday."""
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    logger.info(f"Fetching logs for yesterday: {yesterday}")
-    df = load_df_from_db()
-    return df[df["run_date"] == yesterday]
+def select_logs_from_db_with_filters(filters: dict[str, str] = None) -> pd.DataFrame:
+    query = "SELECT * FROM job_logs"
+    conditions = []
+
+    if filters:
+        for key, value in filters.items():
+            if ">=" in key or "<=" in key or "!=" in key or "=" in key:
+                field, op = key.split(" ", 1)
+                conditions.append(f"{field} {op} '{value}'")
+            else:
+                conditions.append(f"{key} = '{value}'")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    else:
+        raise ValueError("No filters provided for the database query.")
+
+
+    logger.info(f"Executing SQL: {query}")
+
+    with sqlite3.connect(settings.log_db_path) as conn:
+        df = pd.read_sql_query(query, conn)
+
+    logger.info(f"Retrieved {len(df)} rows from job_logs")
+    return df
 
 
 def get_logs_for_time_range(start_date: str, end_date: str) -> pd.DataFrame:
     """Fetch logs within a time range."""
     logger.info(f"Fetching logs from {start_date} to {end_date}")
-    df = load_df_from_db()
-    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-    mask = (df["timestamp"] >= pd.to_datetime(start_date)) & (df["timestamp"] <= pd.to_datetime(end_date))
-    return df[mask]
+    filters = {
+        "timestamp >=": start_date,
+        "timestamp <=": end_date,
+    }
+    return select_logs_from_db_with_filters(filters=filters).reset_index(drop=True)
 
 
 def get_logs_by_period(period: str) -> pd.DataFrame:
@@ -37,44 +57,50 @@ def get_logs_by_period(period: str) -> pd.DataFrame:
         start = now.replace(day=1)
     elif period == "year":
         start = now.replace(month=1, day=1)
+    elif period == "yesterday":
+        start = now - timedelta(days=1)
+        logger.info(f"Fetching logs for yesterday: {start.strftime('%Y-%m-%d')}")
     else:
         logger.warning(f"Unknown period requested: {period}")
         return pd.DataFrame()
 
     logger.info(f"Fetching logs since {start.strftime('%Y-%m-%d')} for period: {period}")
-    df = load_df_from_db()
-    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-    return df[df["timestamp"] >= start]
+    return select_logs_from_db_with_filters(filters={"timestamp >=": start.strftime("%Y-%m-%d")}).reset_index(drop=True)
 
 
 def get_all_logs() -> pd.DataFrame:
     """Return all logs from DB."""
     logger.info("Fetching all logs from DB")
-    return load_df_from_db()
+    return select_logs_from_db_with_filters().reset_index(drop=True)
 
 
-def fetch_logs_for_prompt(params: dict) -> pd.DataFrame:
+def fetch_data_for_prompt(params: dict) -> pd.DataFrame:
     """
     Central function to fetch logs based on user-interpreted prompt params.
     Supports:
     - date_filter: week, month, year
     - start_date, end_date
     - filters: dict of exact or conditional filters
-
-    TODO: Push filters to SQL in load_df_from_db() when DB size grows
     """
     date_filter = params.get("date_filter")
     start_date = params.get("start_date")
     end_date = params.get("end_date")
     filters = params.get("filters", {})
 
+    base_filters = {}
     if start_date and end_date:
-        df = get_logs_for_time_range(start_date, end_date)
+        base_filters["timestamp >="] = start_date
+        base_filters["timestamp <="] = end_date
     elif date_filter:
-        df = get_logs_by_period(date_filter)
-    else:
-        df = get_all_logs()
+        now = datetime.now()
+        if date_filter == "week":
+            base_filters["timestamp >="] = (now - timedelta(days=now.weekday())).strftime("%Y-%m-%d")
+        elif date_filter == "month":
+            base_filters["timestamp >="] = now.replace(day=1).strftime("%Y-%m-%d")
+        elif date_filter == "year":
+            base_filters["timestamp >="] = now.replace(month=1, day=1).strftime("%Y-%m-%d")
 
-    df = apply_filters(df, filters)
-    logger.info(f"Applied filters. Final record count: {len(df)}")
-    return df
+    full_filters = {**base_filters, **filters}
+    df = select_logs_from_db_with_filters(filters=full_filters)
+    logger.info(f"Applied SQL-level filters. Final record count: {len(df)}")
+    return df.reset_index(drop=True)

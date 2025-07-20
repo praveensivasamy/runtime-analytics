@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def render(tab):
     with tab:
-        logger.info("Rendering Prediction Accuracy tab...")
+        logger.debug("Rendering Prediction Accuracy tab...")
         st.subheader("Prediction Accuracy")
 
         db_path = settings.log_db_path

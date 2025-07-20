@@ -1,78 +1,69 @@
+from typing import Any
+
 import pandas as pd
 
+from runtime_analytics.repositories.job_log_repository import get_all_logs, get_logs_by_period, get_logs_for_time_range
+from runtime_analytics.utils.filters import apply_filters
 
-def aggregate_by_field(df: pd.DataFrame, group_by: str, agg_field: str, operations: list[str], **kwargs) -> pd.DataFrame:
+
+def aggregate_by_field(df: pd.DataFrame, params: dict[str, Any] | None = None) -> pd.DataFrame:
+    if params is None:
+        params = {}
+    group_by = params.get("group_by", "type")
+    agg_field = params.get("agg_field", "duration")
+    operations = params.get("operations", ["mean"])
+
     agg_funcs = {f"{agg_field}_{op}": (agg_field, op) for op in operations}
     return df.groupby(group_by).agg(**agg_funcs).reset_index()
 
 
-def job_count_by_type(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def job_count_by_type(df: pd.DataFrame) -> pd.DataFrame:
     return df.groupby("type").agg(run_count=("id", "count"), total_config_count=("config_count", "sum")).reset_index()
 
 
-def filter_jobs(df: pd.DataFrame, filters: dict[str, object] | None = None, **kwargs) -> pd.DataFrame:
-    if not filters:
+def filter_jobs(df: pd.DataFrame, params: dict[str, Any] | None = None) -> pd.DataFrame:
+    if params is None or not params.get("filters"):
         return df
+    filters = params["filters"]
     query_parts = [f"{k} == {v!r}" for k, v in filters.items()]
     return df.query(" & ".join(query_parts))
 
 
-def get_top_slow_jobs(df: pd.DataFrame, top_n: int = 10, **kwargs) -> pd.DataFrame:
-    return df.sort_values(by="duration", ascending=False).head(top_n)
+def select_jobs_by_metric_rank(df: pd.DataFrame, params: dict) -> pd.DataFrame:
+    """
+    Rank jobs by duration with a domain-aware tiebreaker:
+    - Ascending (fast jobs): higher config_count is better
+    - Descending (slow jobs): lower config_count is worse
+    """
+    n = params.get("n", 10)
+    metric = params.get("metric", "duration")
+    ascending = params.get("ascending", True)
+
+    if metric not in df.columns or "job_id" not in df.columns or "config_count" not in df.columns:
+        raise ValueError("Missing required column(s): job_id, metric, or config_count")
+
+    df_unique = df.drop_duplicates(subset="job_id").copy()
+
+    # Determine tie-breaker sort direction based on ascending
+    # Fast jobs: tie-break with config_count DESC (higher is better)
+    # Slow jobs: tie-break with config_count ASC (lower is worse)
+    tiebreaker_order = False if ascending else True
+
+    df_sorted = df_unique.sort_values(by=[metric, "config_count"], ascending=[ascending, tiebreaker_order]).reset_index(drop=True)
+
+    df_sorted.insert(0, "rank", range(1, len(df_sorted) + 1))
+    return df_sorted.head(n)
 
 
-def top_slow_jobs_grouped(df: pd.DataFrame, n: int = 10, **kwargs) -> pd.DataFrame:
-    df = df.copy()
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
-
-    top_jobs = (
-        df.groupby(["job_id", "timestamp"], as_index=False)["duration"].max().sort_values(by="duration", ascending=False).head(n)
-    )
-    top_jobs["rank"] = range(1, len(top_jobs) + 1)
-
-    df_top = df.merge(
-        top_jobs[["job_id", "timestamp", "rank"]],
-        on=["job_id", "timestamp"],
-        how="inner",
-    )
-
-    df_top["month"] = df_top["timestamp"].dt.strftime("%B")
-    df_top["week"] = df_top["timestamp"].dt.strftime("%U_%Y")
-    df_top["week_number"] = df_top["timestamp"].dt.isocalendar().week
-    df_top["year"] = df_top["timestamp"].dt.year
-    df_top["day"] = df_top["timestamp"].dt.strftime("%a")
-
-    if "predicted_duration" not in df_top.columns:
-        df_top["predicted_duration"] = None
-
-    return df_top[
-        [
-            "rank",
-            "timestamp",
-            "riskdate",
-            "id",
-            "type",
-            "predicted_duration",
-            "duration",
-            "config_count",
-            "job_order",
-            "job_run_count",
-            "job_sequence",
-            "job_count",
-            "day",
-            "month",
-            "week",
-            "year",
-            "week_number",
-        ]
-    ].sort_values(by=["rank", "timestamp"])
-
-
-def unique_jobs_per_day(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def unique_jobs_per_day(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
     return df.groupby(["run_date", "id"]).size().reset_index(name="count")
 
 
-def prediction_accuracy_per_job_type(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def prediction_accuracy_per_job_type(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
     if "predicted_duration" not in df.columns or "duration" not in df.columns:
         return pd.DataFrame(columns=["type", "total_runs", "avg_absolute_error", "avg_relative_error"])
 
@@ -91,7 +82,7 @@ def prediction_accuracy_per_job_type(df: pd.DataFrame, **kwargs) -> pd.DataFrame
     )
 
 
-def top_anomaly_scores(df: pd.DataFrame, n: int = 10, **kwargs) -> pd.DataFrame:
+def top_anomaly_scores(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     if "anomaly_score" not in df.columns:
         return pd.DataFrame(
             columns=[
