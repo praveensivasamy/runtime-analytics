@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "runtime-analytics"
-version = "0.1.0"
+version = "0.2.0"
 description = "A lightweight log analysis tool with prompt-based querying and GUI"
 authors = ["Praveen Sivasamy"]
 packages = [{ include = "runtime_analytics" }]
